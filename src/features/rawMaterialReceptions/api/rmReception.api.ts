@@ -1,4 +1,5 @@
 import api from "@/shared/api/api"
+import { z } from "zod"
 import { manejarErrorApi } from "@/shared/api/manejarErrorApi"
 import { esquemaRespuestaListaPaginada, esquemaRespuestaItem, esquemaRespuestaMutacion } from "@/shared/api/respuestaApi.esquema"
 import { rmReceptionSchema } from "@/features/rawMaterialReceptions/schema/rmReception.schema"
@@ -19,6 +20,8 @@ export type RmReceptionFilters = {
     grn?: string
     page?: number
     date?: string
+    startDate?: string
+    endDate?: string
     producer?: string
     inspector?: string
     plate?: string
@@ -33,6 +36,8 @@ export async function listRmReceptionsApi(filters?: RmReceptionFilters) {
         if (filters?.grn?.trim()) params.grn = filters.grn.trim()
         if (filters?.page) params.page = filters.page
         if (filters?.date) params.date = filters.date
+        if (filters?.startDate) params.startDate = filters.startDate
+        if (filters?.endDate) params.endDate = filters.endDate
         if (filters?.producer) params.producer = filters.producer
         if (filters?.inspector) params.inspector = filters.inspector
         if (filters?.plate) params.plate = filters.plate
@@ -64,10 +69,34 @@ export async function getRmReceptionApi(id: number) {
     }
 }
 
-export async function getReceptionDocumentApi(id: number) {
+export async function getReceptionDocumentApi(id: number, signal?: AbortSignal) {
     try {
-        const { data } = await api.get(`/rm-receptions/${id}/document`)
+        const { data } = await api.get(`/rm-receptions/${id}/document`, { signal })
         return boletaSchema.parse(data)
+    } catch (error) { manejarErrorApi(error) }
+}
+
+export async function getReceptionDownloadDocumentApi(id: number, signal?: AbortSignal) {
+    try {
+        const { data } = await api.get(`/rm-receptions/${id}/download-document`, { signal })
+        return boletaSchema.parse(data)
+    } catch (error) { manejarErrorApi(error) }
+}
+
+export async function searchReceptionDownloadsApi(filters: RmReceptionFilters, signal?: AbortSignal) {
+    try {
+        const { data } = await api.get("/rm-receptions/documents/search", { params: { ...filters, limit: 10 }, signal })
+        return listaBoletasPaginadaSchema.parse(data)
+    } catch (error) { manejarErrorApi(error) }
+}
+
+const documentIdsSchema = z.object({ data: z.array(z.number().int().positive()).max(200) })
+
+export async function listReceptionDocumentIdsApi(filters: RmReceptionFilters, signal?: AbortSignal) {
+    try {
+        const { page: _page, ...params } = filters
+        const { data } = await api.get("/rm-receptions/documents", { params, signal })
+        return documentIdsSchema.parse(data).data
     } catch (error) { manejarErrorApi(error) }
 }
 

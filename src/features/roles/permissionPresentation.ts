@@ -24,11 +24,13 @@ const actions: Record<string, string> = {
     assignGrn: "Asignar GRN",
     overrideEdit: "Editar sin límite de etapa o cantidad",
     viewHistory: "Consultar historial de correcciones",
+    downloadDocuments: "Descargar boletas por fechas y productor",
 }
 
-const actionOrder = ["view", "manageCarrier", "create", "receive", "edit", "editField", "editReception", "assignGrn", "viewHistory", "overrideEdit", "delete"]
+const actionOrder = ["view", "manageCarrier", "create", "receive", "edit", "editField", "editReception", "assignGrn", "viewHistory", "downloadDocuments", "overrideEdit", "delete"]
 
 const workflowLabels: Record<string, { label: string; description: string }> = {
+    "rawMaterialReceptions:downloadDocuments": { label: "Descargar boletas por fechas y productor", description: "Abrir el apartado de descarga, filtrar por fechas y productor, y descargar boletas amarillas y evaluaciones de calidad, individuales o en ZIP. Respeta el alcance de consulta del usuario. Debe asignarse expresamente a cada rol." },
     "rawMaterialReceptions:manageCarrier": { label: "Gestionar boletas del transportista asignado", description: "Permite al representante del rol Campo consultar las boletas y PDF de todos los usuarios de su transportista, y corregirlas según los permisos del apartado, sus etapas y límites. Requiere asignar el transportista en Usuarios. No permite acceder a otros transportistas." },
     "dashboard:view": { label: "Ver dashboard y descargar reportes", description: "Acceder al dashboard y exportar el reporte de boletas cerradas. Ver boletas no concede este acceso." },
     "rawMaterialReceptions:editField": { label: "Corregir datos de campo", description: "Hasta dos correcciones por boleta, antes de registrar la recepción en planta." },

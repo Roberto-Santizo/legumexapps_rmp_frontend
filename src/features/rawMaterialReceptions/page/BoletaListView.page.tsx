@@ -1,6 +1,7 @@
 import { PageContainer } from "@/shared/component/pageContainer.component"
 import { AssignGrnModal } from "../component/AssignGrnModal"
 import { ReceptionRowActions } from "../component/ReceptionRowActions"
+import { ReceiptDownloads } from "../component/ReceiptDownloads"
 import { useAuthentication } from "@/features/authentication/hook/useAuthentication"
 import { useEffect, useId, useMemo, useState } from "react"
 import type { ReactNode } from "react"
@@ -14,7 +15,7 @@ import { receiptActionPermissions } from "../utils/editPolicy"
 import { LoadingSpinner } from "@/shared/component/loadingSpinner.component"
 import { Input } from "@/shared/component/input.component"
 import { DateInput } from "@/shared/component/dateInput.component"
-import { isIsoDate } from "@/shared/utils/guatemalaDate"
+import { formatGuatemalaDate, isIsoDate } from "@/shared/utils/guatemalaDate"
 import { Select } from "@/shared/component/select.component"
 import { SearchInput } from "@/shared/component/searchInput.component"
 import { PaginationComponent } from "@/shared/component/pagination.component"
@@ -56,7 +57,8 @@ export function BoletaListView() {
     const { user } = useAuthentication()
     const [receiptNumber, setReceiptNumber] = useState("")
     const [grn, setGrn] = useState("")
-    const [date, setDate] = useState("")
+    const [startDate, setStartDate] = useState("")
+    const [endDate, setEndDate] = useState("")
     const [producer, setProducer] = useState("")
     const [inspector, setInspector] = useState("")
     const [plate, setPlate] = useState("")
@@ -77,15 +79,19 @@ export function BoletaListView() {
         () => ({
             receiptNumber: Number(debouncedReceiptNumber) > 0 ? debouncedReceiptNumber : undefined,
             grn: debouncedGrn.trim() || undefined,
-            date: isIsoDate(date) ? date : undefined,
+            startDate: isIsoDate(startDate) ? startDate : undefined,
+            endDate: isIsoDate(endDate) ? endDate : undefined,
             producer: debouncedProducer || undefined,
             inspector: debouncedInspector || undefined,
             plate: debouncedPlate || undefined,
             carrier: debouncedCarrier || undefined,
             status: status || undefined,
         }),
-        [debouncedReceiptNumber, debouncedGrn, date, debouncedProducer, debouncedInspector, debouncedPlate, debouncedCarrier, status]
+        [debouncedReceiptNumber, debouncedGrn, startDate, endDate, debouncedProducer, debouncedInspector, debouncedPlate, debouncedCarrier, status]
     )
+
+    const validDates = (!startDate || isIsoDate(startDate)) && (!endDate || isIsoDate(endDate))
+        && (!startDate || !endDate || startDate <= endDate)
 
     const activeFilterCount = Object.values(filters).filter(Boolean).length
     const hasActiveFilters = activeFilterCount > 0
@@ -97,14 +103,15 @@ export function BoletaListView() {
     const boletasQuery = useQuery({
         queryKey: ["rm-receptions", currentPage, filters],
         queryFn: () => listRmReceptionsApi({ ...filters, page: currentPage }),
-        enabled: !date || isIsoDate(date),
+        enabled: validDates,
         placeholderData: (previousData) => previousData,
     })
 
     function limpiarFiltros() {
         setReceiptNumber("")
         setGrn("")
-        setDate("")
+        setStartDate("")
+        setEndDate("")
         setProducer("")
         setInspector("")
         setPlate("")
@@ -112,11 +119,7 @@ export function BoletaListView() {
         setStatus("")
     }
 
-    if (boletasQuery.isLoading) return <LoadingSpinner />
-    if (boletasQuery.isError)
-        return <p className="text-center text-error-fg">{boletasQuery.error?.message ?? "Error al cargar las boletas."}</p>
-
-    const boletas = boletasQuery.data?.data ?? []
+    const boletas = validDates && !boletasQuery.isError ? boletasQuery.data?.data ?? [] : []
     const totalPages = boletasQuery.data?.meta.totalPages ?? 1
 
     return (
@@ -127,6 +130,8 @@ export function BoletaListView() {
                     linkTo={user?.permissions.includes("rawMaterialReceptions:create") ? "/boletas/nueva" : undefined}
                     linkText={user?.permissions.includes("rawMaterialReceptions:create") ? "Crear boleta materia prima" : undefined}
                 />
+
+                {user?.permissions.includes("rawMaterialReceptions:downloadDocuments") && <ReceiptDownloads />}
 
                 <button
                     type="button"
@@ -170,8 +175,11 @@ export function BoletaListView() {
                         <FilterField label="GRN" htmlFor={`${filtersId}-grn`}>
                             <SearchInput id={`${filtersId}-grn`} value={grn} onChange={setGrn} placeholder="Ej. LP0080746 o 80746" />
                         </FilterField>
-                        <FilterField label="Fecha" htmlFor={`${filtersId}-date`}>
-                            <DateInput id={`${filtersId}-date`} value={date} onChange={setDate} />
+                        <FilterField label="Desde" htmlFor={`${filtersId}-start-date`}>
+                            <DateInput id={`${filtersId}-start-date`} value={startDate} onChange={setStartDate} max={isIsoDate(endDate) ? endDate : undefined} />
+                        </FilterField>
+                        <FilterField label="Hasta" htmlFor={`${filtersId}-end-date`}>
+                            <DateInput id={`${filtersId}-end-date`} value={endDate} onChange={setEndDate} min={isIsoDate(startDate) ? startDate : undefined} />
                         </FilterField>
                         <FilterField label="Productor" htmlFor={`${filtersId}-producer`}>
                             <SearchInput id={`${filtersId}-producer`} value={producer} onChange={setProducer} placeholder="Buscar productor..." />
@@ -197,6 +205,8 @@ export function BoletaListView() {
                         </FilterField>
                     </div>
 
+                    <p className="mt-3 text-xs text-text-tertiary">Se filtra por la fecha del documento de recepción en Guatemala. Se incluyen ambos días. Las evaluaciones corresponden a esas boletas.</p>
+
                     {hasActiveFilters && (
                         <button
                             type="button"
@@ -211,11 +221,15 @@ export function BoletaListView() {
                     </div>
                 </div>
 
-                {boletas.length > 0 ? (
+                {!validDates && <p role="alert" className="text-sm text-error-fg">Ingresa fechas válidas. Desde debe ser anterior o igual a Hasta.</p>}
+                {boletasQuery.isError && <p role="alert" className="text-sm text-error-fg">{boletasQuery.error.message ?? "Error al cargar las boletas."}</p>}
+
+                {boletasQuery.isLoading ? <LoadingSpinner /> : boletas.length > 0 ? (
                     <Table>
                         <TableHead>
                             <TableRow>
                                 <Th>Boleta</Th>
+                                <Th>Fecha</Th>
                                 <Th>GRN</Th>
                                 <Th>Planta</Th>
                                 <Th>Placa</Th>
@@ -234,6 +248,7 @@ export function BoletaListView() {
                                 return (
                                     <TableRow key={boleta.id}>
                                         <Td className="font-medium">{numeroBoleta(boleta.id)}</Td>
+                                        <Td className="whitespace-nowrap text-text-tertiary">{formatGuatemalaDate(boleta.docDate)}</Td>
                                         <Td className="text-text-tertiary">{boleta.grn ?? "—"}</Td>
                                         <Td className="text-text-tertiary">{boleta.plant?.name ?? (boleta.status === "pendiente_recepcion" ? "Por recibir" : "Sin asignar")}</Td>
                                         <Td className="text-text-tertiary">{detalle?.plate?.name ?? "—"}</Td>
