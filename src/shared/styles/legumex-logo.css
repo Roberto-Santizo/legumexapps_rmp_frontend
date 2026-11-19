@@ -1,0 +1,41 @@
+.legumex-stacked-logo {
+    --legumex-logo-width: 12rem;
+    --legumex-logo-ink: #00552e;
+    --legumex-logo-muted: #00552e;
+    --legumex-logo-peak: #00552e;
+    --legumex-logo-field: #2f8427;
+    --legumex-logo-leaf: #70b510;
+    --legumex-logo-line: #459b18;
+    display: inline-flex;
+    width: var(--legumex-logo-width);
+    max-width: 100%;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    color: var(--legumex-logo-ink);
+    line-height: 1;
+}
+.legumex-stacked-logo[data-tone="inverse"] {
+    --legumex-logo-ink: #f8fafc;
+    --legumex-logo-muted: #cbd5e1;
+    --legumex-logo-peak: #86efac;
+    --legumex-logo-field: #66b947;
+    --legumex-logo-leaf: #bef264;
+    --legumex-logo-line: #4ade80;
+}
+.legumex-stacked-logo-mark { display: block; width: 100%; height: auto; overflow: visible; }
+.legumex-stacked-logo-peak { fill: var(--legumex-logo-peak); }
+.legumex-stacked-logo-field { fill: var(--legumex-logo-field); }
+.legumex-stacked-logo-leaf { fill: var(--legumex-logo-leaf); }
+.legumex-stacked-logo-ink { fill: var(--legumex-logo-ink); }
+.legumex-stacked-logo-line { fill: var(--legumex-logo-line); }
+.legumex-logo-header { --legumex-logo-width: 86px; }
+.legumex-logo-login { --legumex-logo-width: 210px; }
+.legumex-logo-receipt { --legumex-logo-width: 96px; }
+@media (max-width: 479px) {
+    .legumex-logo-login { --legumex-logo-width: 180px; }
+}
+@media print {
+    .legumex-stacked-logo { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

@@ -1,0 +1,14 @@
+
+import {Routes } from "react-router-dom";
+import PublicRoutes from "./PublicRoutes";
+import AdminRoutes from "./AdminRoutes"
+
+export default function AppRouter() {
+  return (
+      <Routes>
+        {PublicRoutes()}
+        {AdminRoutes()}
+      </Routes>
+  );
+}
+

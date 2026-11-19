@@ -1,0 +1,54 @@
+/* Tablas */
+.table-container {
+    @apply space-y-6 rounded-card border border-border-light bg-surface p-5 shadow-card sm:p-8;
+}
+
+.table-header {
+    @apply border-b border-border-light pb-5;
+}
+
+.table-title {
+    @apply text-2xl font-semibold tracking-tight text-dark;
+}
+
+.table {
+    @apply w-full border-collapse text-left text-sm;
+}
+
+.table thead {
+    @apply border-b border-border-light bg-bg-primary;
+}
+
+.table th {
+    @apply whitespace-nowrap px-5 py-4 text-xs font-semibold uppercase tracking-wide text-text-tertiary;
+}
+
+.table td {
+    @apply px-5 py-4 text-dark;
+}
+
+.table tbody tr {
+    @apply border-b border-border-light/70 transition-colors last:border-0 even:bg-bg-primary/40 hover:bg-primary/5;
+}
+
+.table-cell-center {
+    @apply text-center;
+}
+
+.table-cell-right {
+    @apply text-right;
+}
+
+.table-actions {
+    @apply flex items-center gap-2;
+}
+
+/* Botones */
+.btn-icon {
+    @apply flex h-9 w-9 items-center justify-center rounded-[10px] border border-border-light bg-surface transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed;
+}
+
+.btn-icon-primary {
+    @apply text-text-tertiary hover:bg-bg-primary hover:text-dark;
+}
+

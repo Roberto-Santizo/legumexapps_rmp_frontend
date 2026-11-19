@@ -1,22 +1,33 @@
+import { useFieldAccessibility } from "./formField.context"
+import { formControlClassName } from "@/shared/component/formControl.styles"
 import { forwardRef } from "react"
-import type { TextareaHTMLAttributes } from "react"
+import type { ChangeEvent, TextareaHTMLAttributes } from "react"
+import { aplicarMayusculas } from "@/shared/validacion/aplicarMayusculas"
 
 type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
     hasError?: boolean
+    preserveCase?: boolean
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-    { hasError, className = "", ...props },
+    { hasError, preserveCase = false, className = "", onChange, ...props },
     ref
 ) {
+    const accessibility = useFieldAccessibility(hasError, props["aria-describedby"])
+    function handleChange(event: ChangeEvent<HTMLTextAreaElement>) {
+        if (!preserveCase) aplicarMayusculas(event)
+        onChange?.(event)
+    }
+
     return (
         <textarea
             ref={ref}
             rows={4}
-            className={`w-full rounded-[10px] border-[1.5px] bg-hueso px-4 py-3 text-verde-profundo placeholder:text-texto-suave focus:outline-none focus:ring-2 focus:ring-dorado focus:ring-offset-2 ${
-                hasError ? "border-error-bd" : "border-gris-campo focus:border-verde-profundo"
-            } ${className}`}
+            onChange={handleChange}
+            className={formControlClassName(hasError, `min-h-28 py-3 ${className}`)}
+            {...accessibility}
             {...props}
+            aria-describedby={accessibility["aria-describedby"]}
         />
     )
 })

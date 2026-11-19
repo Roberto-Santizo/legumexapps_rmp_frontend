@@ -1,44 +1,113 @@
-import type { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react"
+import { buttonClassName } from "@/shared/component/button.styles"
+import type { ReactNode } from "react"
+import { Link } from "react-router-dom"
 
-export function TableContainer({ className = "", ...props }: HTMLAttributes<HTMLDivElement>) {
-    return <div className={`overflow-x-auto rounded-card bg-hueso shadow-card ${className}`} {...props} />
+type TableContainerProps = {
+    children: ReactNode
+    className?: string
 }
 
-export function Table({ className = "", ...props }: HTMLAttributes<HTMLTableElement>) {
-    return <table className={`w-full border-collapse text-left text-sm ${className}`} {...props} />
+type TableHeaderProps = {
+    title: string
+    linkTo?: string
+    linkText?: string
+    children?: ReactNode
 }
 
-export function TableHead({ className = "", ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-    return <thead className={`border-b border-gris-campo ${className}`} {...props} />
+type TableProps = {
+    children: ReactNode
+    className?: string
 }
 
-export function TableBody({ className = "", ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-    return <tbody className={className} {...props} />
+type TableHeadProps = {
+    children: ReactNode
 }
 
-export function TableRow({ className = "", ...props }: HTMLAttributes<HTMLTableRowElement>) {
-    return <tr className={`border-b border-gris-campo last:border-0 hover:bg-crema/60 ${className}`} {...props} />
+type TableBodyProps = {
+    children: ReactNode
 }
 
-export function Th({ className = "", ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
+type TableRowProps = {
+    children: ReactNode
+    className?: string
+    onClick?: () => void
+}
+
+type TableCellProps = {
+    children: ReactNode
+    align?: "left" | "center" | "right"
+    className?: string
+}
+
+type TableEmptyProps = {
+    message?: string
+}
+
+type TableActionsProps = {
+    children: ReactNode
+    align?: "left" | "center" | "right"
+}
+
+function alignClassName(align: "left" | "center" | "right") {
+    return align === "center" ? "table-cell-center" : align === "right" ? "table-cell-right" : ""
+}
+
+export function TableContainer({ children, className = "" }: TableContainerProps) {
+    return <div className={`table-container ${className}`}>{children}</div>
+}
+
+export function TableHeader({ title, linkTo, linkText = "Crear", children }: TableHeaderProps) {
     return (
-        <th
-            className={`px-4 py-3 text-xs font-medium uppercase tracking-wide text-texto-suave ${className}`}
-            {...props}
-        />
+        <div className="table-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <h2 className="table-title">{title}</h2>
+            {children
+                ? children
+                : linkTo && (
+                      <Link to={linkTo} className={buttonClassName("primary", "whitespace-nowrap")}>
+                          {linkText}
+                      </Link>
+                  )}
+        </div>
     )
 }
 
-export function Td({ className = "", ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
-    return <td className={`px-4 py-3 text-verde-profundo ${className}`} {...props} />
+export function Table({ children, className = "" }: TableProps) {
+    return (
+        <div className="overflow-x-auto rounded-xl border border-border-light">
+            <table className={`table ${className}`}>{children}</table>
+        </div>
+    )
 }
 
-export function TableEmpty({ message, colSpan }: { message: string; colSpan: number }) {
+export function TableHead({ children }: TableHeadProps) {
+    return <thead>{children}</thead>
+}
+
+export function TableBody({ children }: TableBodyProps) {
+    return <tbody>{children}</tbody>
+}
+
+export function TableRow({ children, className = "", onClick }: TableRowProps) {
     return (
-        <tr>
-            <td colSpan={colSpan} className="px-4 py-8 text-center text-texto-suave">
-                {message}
-            </td>
+        <tr className={className} onClick={onClick}>
+            {children}
         </tr>
     )
+}
+
+export function Th({ children, align = "left", className = "" }: TableCellProps) {
+    return <th className={`${alignClassName(align)} ${className}`}>{children}</th>
+}
+
+export function Td({ children, align = "left", className = "" }: TableCellProps) {
+    return <td className={`${alignClassName(align)} ${className}`}>{children}</td>
+}
+
+export function TableEmpty({ message = "No hay datos registrados." }: TableEmptyProps) {
+    return <p className="rounded-xl border border-dashed border-border-light bg-bg-primary/60 px-6 py-16 text-center text-sm text-text-tertiary">{message}</p>
+}
+
+export function TableActions({ children, align = "center" }: TableActionsProps) {
+    const alignClass = align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"
+    return <div className={`table-actions ${alignClass}`}>{children}</div>
 }

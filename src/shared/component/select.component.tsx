@@ -1,3 +1,5 @@
+import { useFieldAccessibility } from "./formField.context"
+import { formControlClassName } from "@/shared/component/formControl.styles"
 import { forwardRef } from "react"
 import type { SelectHTMLAttributes } from "react"
 
@@ -9,13 +11,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
     { hasError, className = "", ...props },
     ref
 ) {
+    const accessibility = useFieldAccessibility(hasError, props["aria-describedby"])
     return (
         <select
             ref={ref}
-            className={`h-12 w-full rounded-[10px] border-[1.5px] bg-hueso px-4 text-verde-profundo focus:outline-none focus:ring-2 focus:ring-dorado focus:ring-offset-2 ${
-                hasError ? "border-error-bd" : "border-gris-campo focus:border-verde-profundo"
-            } ${className}`}
+            className={formControlClassName(hasError, `h-12 ${className}`)}
+            {...accessibility}
             {...props}
+            aria-describedby={accessibility["aria-describedby"]}
         />
     )
 })

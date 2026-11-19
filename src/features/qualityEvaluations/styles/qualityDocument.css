@@ -1,0 +1,34 @@
+.quality-document { max-width: 1000px; margin-inline: auto; border: 1px solid #d4d4d4; background: white; padding: 28px; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
+.quality-document-header { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 18px; align-items: start; }
+.quality-document-header .legumex-stacked-logo { --legumex-logo-width: 105px; }
+.quality-document-title { text-align: center; }
+.quality-document-title h3 { color: #e11d48; font-size: 22px; font-weight: 700; }
+.quality-document-meta { text-align: right; font-size: 11px; }
+.quality-document-reference { margin-top: 22px; font-size: 12px; }
+.quality-document-date { margin-block: 16px 24px; }
+.quality-document-info { border-top: 1px solid #111; border-left: 1px solid #111; margin-bottom: 30px; }
+.quality-document-info > div { display: grid; grid-template-columns: 1fr 1fr; }
+.quality-document-info p { border-right: 1px solid #111; border-bottom: 1px solid #111; padding: 9px 6px; overflow-wrap: anywhere; }
+.quality-document-table-scroll { overflow-x: auto; }
+.quality-document-table-scroll:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.quality-document-table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 12px; }
+.quality-document-table th, .quality-document-table td { border: 1px solid #111; padding: 9px 6px; text-align: center; overflow-wrap: anywhere; }
+.quality-document-table th { font-weight: 700; }
+.quality-document-table tfoot th { text-align: right; }
+.quality-document-table tfoot td:last-child { text-align: left; }
+.quality-document-table .quality-document-empty { border: none; }
+.quality-document-observations { margin-top: 30px; }
+.quality-document-observations h4 { margin-bottom: 6px; font-size: 11px; font-weight: 700; }
+.quality-document-observations p { min-height: 75px; padding: 10px; border: 1px solid #111; white-space: pre-wrap; overflow-wrap: anywhere; }
+.quality-document-signature { width: 52%; margin: 42px auto 0; text-align: center; }
+.quality-document-signature img { display: block; width: 100%; height: 72px; object-fit: contain; }
+.quality-document-signature p { border-top: 1px solid #111; padding-top: 12px; overflow-wrap: anywhere; }
+.quality-document-signature small { display: block; margin-top: 5px; }
+.quality-document footer { margin-top: 36px; text-align: center; font-size: 10px; color: #475569; }
+@media (max-width: 640px) {
+    .quality-document { padding: 18px 12px; }
+    .quality-document-header { grid-template-columns: 1fr; justify-items: center; gap: 12px; }
+    .quality-document-meta { text-align: center; }
+    .quality-document-info > div { grid-template-columns: minmax(0, 1fr); }
+    .quality-document-signature { width: 90%; }
+}

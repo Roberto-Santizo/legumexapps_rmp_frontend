@@ -1,0 +1,17 @@
+.quality-defects-table.table th {
+    padding-block: 10px;
+}
+
+.quality-defects-table.table td {
+    padding-block: 8px;
+}
+
+.quality-defects-table input {
+    height: 40px;
+}
+
+@media (max-width: 640px) {
+    .quality-defects-table input {
+        height: 44px;
+    }
+}

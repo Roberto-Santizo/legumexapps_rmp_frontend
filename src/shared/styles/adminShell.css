@@ -1,0 +1,61 @@
+.shell-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 60; width: 16rem; max-width: calc(100vw - 2rem); display: flex; flex-direction: column; border-right: 1px solid var(--color-border-light); background: var(--color-surface); transform: translateX(-100%); visibility: hidden; transition: transform 200ms ease, visibility 200ms; }
+.shell-sidebar.is-open { transform: translateX(0); visibility: visible; }
+.shell-sidebar-brand { position: relative; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: max(24px, env(safe-area-inset-top)) 24px 22px; border-bottom: 1px solid var(--color-border-light); }
+.shell-sidebar-brand .legumex-stacked-logo { --legumex-logo-width: 154px; }
+.shell-sidebar-brand a { border-radius: 8px; }
+.shell-sidebar-brand a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 6px; }
+.shell-sidebar-brand .legumex-stacked-logo-mark path { transition: transform 500ms cubic-bezier(.22,1,.36,1); }
+.shell-sidebar-brand a:hover .legumex-stacked-logo-field { transform: translateX(-6px); }
+.shell-sidebar-brand a:hover .legumex-stacked-logo-leaf { transform: translateX(7px); }
+.shell-sidebar-close { position: absolute; right: 8px; top: 8px; }
+.shell-sidebar-scroll { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding-block: 12px; scrollbar-width: thin; scrollbar-color: var(--color-border-light) transparent; }
+.shell-sidebar-scroll::-webkit-scrollbar { width: 5px; }
+.shell-sidebar-scroll::-webkit-scrollbar-thumb { background: var(--color-border-light); border-radius: 20px; }
+.shell-sidebar-footer { flex-shrink: 0; padding: 16px 20px max(16px, env(safe-area-inset-bottom)); border-top: 1px solid var(--color-border-light); color: var(--color-dark-soft); font-size: 12px; font-weight: 600; }
+.shell-sidebar-footer > span:last-child { display: block; margin-top: 5px; color: var(--color-text-tertiary); font-size: 10px; font-weight: 400; }
+.shell-brand-dot { display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: var(--color-primary); }
+.shell-backdrop { position: fixed; inset: 0; z-index: 55; background: #0f172a66; backdrop-filter: blur(3px); }
+.shell-control { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; flex-shrink: 0; border: 1px solid var(--color-border-light); border-radius: 10px; background: var(--color-surface); color: var(--color-dark-soft); cursor: pointer; transition: background 160ms, border-color 160ms; }
+.shell-control:hover { background: var(--color-bg-primary); border-color: var(--color-primary); }
+.shell-control:focus-visible, .shell-account-button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.shell-header { position: fixed; inset: 0 0 auto 0; z-index: 50; height: 80px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-inline: 16px; border-bottom: 1px solid var(--color-border-light); background: var(--color-surface); box-shadow: 0 2px 12px #0f172a04; }
+.shell-header-title { min-width: 0; }
+.shell-header-title > p { color: var(--color-text-tertiary); font-size: 10px; font-weight: 600; letter-spacing: .16em; }
+.shell-header-title h1 { color: var(--color-dark); font-size: 18px; font-weight: 600; margin-top: 4px; }
+.shell-account { position: relative; min-width: 0; }
+.shell-account-button { display: flex; align-items: center; gap: 12px; padding: 6px 8px; border-radius: 12px; cursor: pointer; }
+.shell-account-button:hover { background: var(--color-bg-primary); }
+.shell-account-text { min-width: 0; text-align: right; }
+.shell-account-greeting { font-size: 12px; color: var(--color-text-tertiary); }
+.shell-account-name { color: var(--color-dark); font-size: 17px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.shell-account-avatar { display: grid; place-items: center; width: 42px; height: 42px; flex-shrink: 0; border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent); border-radius: 13px; background: color-mix(in srgb, var(--color-primary) 12%, transparent); color: var(--color-primary-dark); }
+.shell-account-dropdown { position: absolute; right: 0; top: calc(100% + 12px); width: 260px; max-width: calc(100vw - 24px); border: 1px solid var(--color-border-light); border-radius: 14px; padding: 8px; background: var(--color-surface); box-shadow: var(--shadow-card); }
+.shell-account-dropdown > div { padding: 10px 10px 14px; border-bottom: 1px solid var(--color-border-light); margin-bottom: 6px; }
+.shell-account-dropdown small { color: var(--color-text-tertiary); }
+.shell-account-dropdown p { margin-top: 4px; color: var(--color-dark); font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.shell-account-dropdown button { width: 100%; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px; border-radius: 8px; color: var(--color-error-fg); font-size: 13px; font-weight: 600; }
+.shell-account-dropdown button:hover { background: var(--color-error-bg); }
+.shell-account-dropdown button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+.shell-nav { padding: 0 14px; }
+.shell-nav-link { position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: var(--color-text-tertiary); font-size: 13px; font-weight: 500; transition: background 160ms, color 160ms; }
+.shell-nav-link:hover { color: var(--color-dark); background: var(--color-bg-primary); }
+.shell-nav-link.is-active { color: var(--color-dark); background: color-mix(in srgb, var(--color-primary) 12%, transparent); font-weight: 600; }
+.shell-nav-link.is-active::before { content: ""; position: absolute; inset: 12px auto 12px 0; width: 3px; border-radius: 10px; background: var(--color-primary); }
+.shell-nav-link.is-active > svg { color: var(--color-primary-dark); }
+.shell-nav-link:focus-visible, .shell-nav-trigger:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+.shell-nav-section { border-bottom: 1px solid var(--color-border-light); padding-bottom: 12px; }
+.shell-nav-trigger { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; width: 100%; padding: 8px 12px; border-radius: 8px; color: var(--color-text-tertiary); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; cursor: pointer; }
+.shell-nav-trigger:hover { color: var(--color-dark); background: var(--color-bg-primary); }
+@media (min-width: 1024px) { .shell-sidebar { transform: none; visibility: visible; } .shell-sidebar-close, .shell-menu-trigger, .shell-backdrop { display: none; } .shell-header { left: 16rem; padding-inline: 28px; } }
+@media (min-width: 1536px) { .shell-account-name { font-size: 20px; } }
+@media (max-width: 1023px) {
+    .shell-header { height: 76px; gap: 8px; padding-inline: 12px; }
+    .shell-header-title { display: none; }
+    .shell-account { position: static; }
+    .shell-account-button { padding: 0; }
+    .shell-account-text { position: absolute; left: 66px; right: 66px; top: 50%; transform: translateY(-50%); text-align: center; }
+    .shell-account-name { font-size: clamp(13px, 2.8vw, 18px); text-wrap: balance; }
+    .shell-account-greeting { font-size: 10px; margin-bottom: 3px; }
+    .shell-account-dropdown { top: calc(100% + 8px); right: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .shell-sidebar, .shell-sidebar-brand .legumex-stacked-logo-mark path { transition: none; } .shell-sidebar-brand a:hover .legumex-stacked-logo-mark path { transform: none; } }
