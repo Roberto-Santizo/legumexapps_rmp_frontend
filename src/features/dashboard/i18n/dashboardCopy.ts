@@ -1,6 +1,8 @@
 export type DashboardLocale = "es" | "en"
 
 const english: Record<string, string> = {
+    "No se cuenta con registros para los filtros seleccionados.": "No records match the selected filters.",
+    "Los gráficos estarán disponibles cuando se registren boletas. También puedes consultar otras fechas, productores o productos.": "Charts will be available once receipts are recorded. You can also try other dates, producers or products.",
     "Productor": "Producer",
     "Todos los productores": "All producers",
     "Todos los productos": "All products",

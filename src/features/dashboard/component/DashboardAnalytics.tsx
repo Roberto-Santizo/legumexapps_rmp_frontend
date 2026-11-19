@@ -40,7 +40,7 @@ export function DashboardAnalytics({ locale = "es" }: { locale?: DashboardLocale
     }
     const exportPdf = useMutation({
         mutationFn: async () => {
-            if (!data) throw new Error(t("Primero carga el dashboard"))
+            if (!data?.summary.receipts) throw new Error(t("No se cuenta con registros para los filtros seleccionados."))
             const [{ pdf }, { DashboardPdfDocument }] = await Promise.all([import("@react-pdf/renderer"), import("../pdf/DashboardPdfDocument")])
             const blob = await pdf(<DashboardPdfDocument data={data} />).toBlob()
             return { blob, period: data.period }
@@ -54,7 +54,7 @@ export function DashboardAnalytics({ locale = "es" }: { locale?: DashboardLocale
         if (sameDashboardFilters(draft, period)) void query.refetch()
         else setPeriod(draft)
     }
-    const charts = data ? buildDashboardCharts(data, locale) : []
+    const charts = data?.summary.receipts ? buildDashboardCharts(data, locale) : []
     const chartOrder = ["trend", "intake", "consignments", "products", "defects", "producers", "producers-low"]
     return <section className="dashboard-visuals" aria-label={t("Recepción y calidad")}>
         <div className="dashboard-period-bar">
@@ -82,7 +82,7 @@ export function DashboardAnalytics({ locale = "es" }: { locale?: DashboardLocale
                     <button type="button" className="dashboard-text-button" disabled={query.isFetching} onClick={() => { setProducerId(undefined); setProductId(undefined) }}>{t("Limpiar productor y producto")}</button>
                 </div>
             </form>
-            <Button type="button" variant="secondary" disabled={!loadedSelection || unapplied || invalid || query.isFetching || query.isError || exportPdf.isPending} onClick={() => exportPdf.mutate()}>
+            <Button type="button" variant="secondary" disabled={!loadedSelection || !data?.summary.receipts || unapplied || invalid || query.isFetching || query.isError || exportPdf.isPending} onClick={() => exportPdf.mutate()}>
                 {exportPdf.isPending ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <Download size={16} aria-hidden="true" />}{t(exportPdf.isPending ? "Preparando PDF..." : "Descargar dashboard PDF")}
             </Button>
         </div>
@@ -99,8 +99,9 @@ export function DashboardAnalytics({ locale = "es" }: { locale?: DashboardLocale
                 <p className="dashboard-updated">{t("Actualizado")} <time dateTime={data.generatedAt}>{formatGuatemalaDateTime(data.generatedAt)}</time></p>
             </div>
             <p className="dashboard-applied-filters">{dashboardFilterLabels(data, locale).join(" · ")}</p>
-            {!data.summary.receipts && <div className="dashboard-no-data" role="status"><h3>{t("Sin boletas en este período")}</h3><p>{t("Selecciona otro rango de fechas para consultar la operación.")} {t("Prueba también con otro productor o producto.")}</p></div>}
-            {data.summary.receipts > 0 && <p className="dashboard-filter-help">{t("Para comparar productores del mismo producto, selecciona el producto y deja Todos los productores.")}</p>}
+            {!data.summary.receipts && <div className="dashboard-no-data" role="status"><h3>{t("No se cuenta con registros para los filtros seleccionados.")}</h3><p>{t("Los gráficos estarán disponibles cuando se registren boletas. También puedes consultar otras fechas, productores o productos.")}</p></div>}
+            {data.summary.receipts > 0 && <>
+            <p className="dashboard-filter-help">{t("Para comparar productores del mismo producto, selecciona el producto y deja Todos los productores.")}</p>
             <DashboardMetrics data={data} locale={locale} />
             <div className="dashboard-section-heading dashboard-analysis-heading"><div><span className="dashboard-eyebrow">{t("Lectura operativa")}</span><h2>{t("Volumen, tendencias y cumplimiento")}</h2></div></div>
             <div className="dashboard-chart-grid">{chartOrder.map(id => {
@@ -113,6 +114,7 @@ export function DashboardAnalytics({ locale = "es" }: { locale?: DashboardLocale
                 <p>{t("Las evaluaciones sin parámetro histórico se excluyen de la tasa de aprobación. La calidad promedio se calcula por boleta evaluada. El ranking exige al menos 3 evaluaciones comparables por productor.")}</p>
                 <p>{t("Los rankings de mayor y menor calidad se ordenan por calidad promedio dentro de los filtros aplicados. En empate se usa aprobación y luego tamaño de muestra. Menos de 3 evaluaciones comparables: se muestran en la tabla, sin entrar al ranking.")}</p>
             </div></details>
+            </>}
         </>}
     </section>
 }

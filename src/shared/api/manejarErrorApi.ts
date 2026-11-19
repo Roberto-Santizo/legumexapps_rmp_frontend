@@ -11,7 +11,16 @@ export class ApiValidationError extends Error {
     }
 }
 
-export function manejarErrorApi(error: unknown): never {
+export class ApiResponseFormatError extends Error {
+    readonly details: { path: string; code: string; expected?: string }[]
+    constructor(details: { path: string; code: string; expected?: string }[], message = "La respuesta del servidor no tiene el formato esperado") {
+        super(message)
+        this.name = "ApiResponseFormatError"
+        this.details = details
+    }
+}
+
+export function manejarErrorApi(error: unknown, responseMessage?: string): never {
     if (isAxiosError<RespuestaMensaje>(error) && error.response) {
         const body = error.response.data as RespuestaMensaje & { details?: unknown }
         const details = Array.isArray(body?.details) ? body.details.flatMap(detail =>
@@ -23,7 +32,12 @@ export function manejarErrorApi(error: unknown): never {
     }
 
     if (error instanceof ZodError) {
-        throw new Error("La respuesta del servidor no tiene el formato esperado")
+        const details = error.issues.map(issue => ({
+            path: issue.path.join("."), code: issue.code,
+            ...(issue.code === "invalid_type" ? { expected: issue.expected } : {}),
+        }))
+        console.error("Respuesta de API incompatible", details)
+        throw new ApiResponseFormatError(details, responseMessage)
     }
 
     throw error
