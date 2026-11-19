@@ -63,22 +63,25 @@ export function BasketFormView() {
             <PageHeader icon={PackageOpen} title={isEditMode ? "Editar canasta" : "Nueva canasta"} description={isEditMode ? "Actualiza el tipo de canasta" : "Registra un nuevo tipo de canasta"} />
 
             <FormPanel onSubmit={onSubmit}>
-                <FormField label="Código" htmlFor="code" error={codeError}>
+                <FormField label="Nombre" htmlFor="code" required error={codeError}>
                     <Input
                         id="code"
-                        placeholder="Ej. CAN-PLASTICA-20"
+                        type="text"
+                        maxLength={255}
+                        placeholder="Ej. Canasta plástica 20"
                         hasError={!!codeError}
                         disabled={isPending}
                         {...register("code")}
                     />
                 </FormField>
 
-                <FormField label="Peso en libras" htmlFor="weight" error={weightError}>
+                <FormField label="Peso en libras" htmlFor="weight" required error={weightError}>
                     <Input
                         id="weight"
                         type="number"
                         inputMode="decimal"
                         step="any"
+                        min={0}
                         placeholder="0.00"
                         hasError={!!weightError}
                         disabled={isPending}

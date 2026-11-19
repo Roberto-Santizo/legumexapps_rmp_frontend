@@ -7,8 +7,8 @@ export const basketSchema = esquemaCatalogoBase.extend({
 })
 
 export const basketFormSchema = z.object({
-    code: z.string().trim().min(1, "El código es obligatorio").max(255, "Máximo 255 caracteres"),
-    weight: z.number().positive("El peso debe ser mayor a 0"),
+    code: z.string().trim().min(1, "El nombre es obligatorio").max(255, "Máximo 255 caracteres"),
+    weight: z.number({ error: "Ingresa un peso numérico válido" }).nonnegative("El peso debe ser mayor o igual a 0"),
 })
 
 export type Basket = z.infer<typeof basketSchema>

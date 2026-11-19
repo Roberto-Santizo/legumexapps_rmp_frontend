@@ -66,13 +66,13 @@ export function BasketListView() {
             <TableContainer>
                 <TableHeader title="Canastas" linkTo={canCreate ? "/canastas/nueva" : undefined} linkText="Nueva canasta" />
 
-                <SearchInput value={search} onChange={setSearch} placeholder="Buscar por código..." className="sm:max-w-sm" />
+                <SearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre..." className="sm:max-w-sm" />
 
                 {baskets.length > 0 ? (
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <Th>Código</Th>
+                                <Th>Nombre</Th>
                                 <Th align="center">Peso (lb)</Th>
                                 {(canEdit || canDelete) && <Th align="center">Acciones</Th>}
                             </TableRow>
