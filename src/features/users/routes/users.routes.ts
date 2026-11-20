@@ -12,4 +12,5 @@ const UserFormView = lazy(() =>
 export const usersRoutes: RouteObject[] = [
     { path: "/usuarios", element: createElement(UserListView) },
     { path: "/usuarios/nuevo", element: createElement(UserFormView) },
+    { path: "/usuarios/:id/editar", element: createElement(UserFormView) },
 ]

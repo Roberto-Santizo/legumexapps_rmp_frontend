@@ -2,6 +2,7 @@ import { StatusAction } from "@/shared/component/statusAction.component"
 import { useAuthentication } from "@/features/authentication/hook/useAuthentication"
 import { PageContainer } from "@/shared/component/pageContainer.component"
 import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { listUsersWithFiltersApi, toggleUserEstadoApi } from "@/features/users/api/user.api"
@@ -12,7 +13,7 @@ import { PaginationComponent } from "@/shared/component/pagination.component"
 import { useDebouncedValue } from "@/shared/hook/useDebouncedValue"
 import { CarrierRepresentativeModal } from "../component/CarrierRepresentativeModal"
 import type { User } from "../schema/user.schema"
-import { Truck, Factory } from "lucide-react"
+import { Truck, Factory, Pencil } from "lucide-react"
 import { UserPlantModal } from "../component/UserPlantModal"
 import {
     TableContainer,
@@ -107,6 +108,7 @@ export function UserListView() {
                                     </Td>
                                     <Td align="center">
                                         <TableActions>
+                                            {canEdit && <Link to={`/usuarios/${user.id}/editar`} className="btn-icon btn-icon-primary" title="Editar" aria-label={`Editar usuario ${user.name}`}><Pencil size={16} aria-hidden="true" /></Link>}
                                             {canEdit && <button type="button" className="btn-icon btn-icon-primary" onClick={() => setPlantUser(user)} aria-label={`Asignar planta a ${user.name}`} title="Asignar planta"><Factory size={16} aria-hidden="true" /></button>}
                                             {canEdit && user.role.name.trim().toLocaleLowerCase("es") === "campo" && <button type="button" className="btn-icon btn-icon-primary" onClick={() => setRepresentativeUser(user)} aria-label={`Asignar transportista a ${user.name}`} title="Asignar transportista representado"><Truck size={16} aria-hidden="true" /></button>}
                                             {canEdit && <StatusAction

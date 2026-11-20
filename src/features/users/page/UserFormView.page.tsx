@@ -3,15 +3,15 @@ import { PageHeader } from "@/shared/component/pageHeader.component"
 import { FormActions } from "@/shared/component/formActions.component"
 import { FormPanel } from "@/shared/component/formPanel.component"
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { UserPlus, Eye, EyeOff } from "lucide-react"
-import { createUserFormSchema } from "@/features/users/schema/user.schema"
+import { UserPlus, UserPen, Eye, EyeOff } from "lucide-react"
+import { createUserFormSchema, editUserFormSchema } from "@/features/users/schema/user.schema"
 import type { CreateUserFormInput } from "@/features/users/schema/user.schema"
-import { createUserApi } from "@/features/users/api/user.api"
+import { createUserApi, getUserApi, updateUserApi } from "@/features/users/api/user.api"
 import { listRolesApi } from "@/features/roles/api/role.api"
 import { FormField } from "@/shared/component/formField.component"
 import { Input } from "@/shared/component/input.component"
@@ -21,9 +21,18 @@ import { listCarriersApi } from "@/features/carriers/api/carrier.api"
 import { listPlantsApi } from "@/features/plants/api/plant.api"
 
 export function UserFormView() {
+    const { id } = useParams()
+    const isEditMode = Boolean(id)
+    const userId = id ? Number(id) : undefined
     const navigate = useNavigate()
     const queryClient = useQueryClient()
     const [showPassword, setShowPassword] = useState(false)
+
+    const userQuery = useQuery({
+        queryKey: ["users", userId],
+        queryFn: () => getUserApi(userId!),
+        enabled: isEditMode,
+    })
 
     const rolesQuery = useQuery({
         queryKey: ["roles"],
@@ -37,30 +46,47 @@ export function UserFormView() {
         handleSubmit,
         formState: { errors },
     } = useForm<CreateUserFormInput>({
-        resolver: zodResolver(createUserFormSchema),
+        resolver: zodResolver(isEditMode ? editUserFormSchema : createUserFormSchema),
         defaultValues: { name: "", username: "", password: "", confirmPassword: "", roleId: "", representedCarrierId: "", plantId: "" },
+        values: isEditMode && userQuery.data ? {
+            name: userQuery.data.data.name,
+            username: userQuery.data.data.username,
+            roleId: String(userQuery.data.data.roleId),
+            plantId: userQuery.data.data.plantId ? String(userQuery.data.data.plantId) : "",
+            representedCarrierId: userQuery.data.data.representedCarrierId ? String(userQuery.data.data.representedCarrierId) : "",
+            password: "",
+            confirmPassword: "",
+        } : undefined,
     })
     const roleId = watch("roleId")
     const isFieldRole = rolesQuery.data?.data.find(role => role.id === Number(roleId))?.name.trim().toLocaleLowerCase("es") === "campo"
     const carriersQuery = useQuery({ queryKey: ["carriers"], queryFn: () => listCarriersApi(), enabled: isFieldRole })
 
     const saveMutation = useMutation({
-        mutationFn: ({ confirmPassword: _confirmPassword, roleId, representedCarrierId, plantId, ...formData }: CreateUserFormInput) =>
-            createUserApi({ ...formData, roleId: Number(roleId), representedCarrierId: isFieldRole && representedCarrierId ? Number(representedCarrierId) : null, plantId: plantId ? Number(plantId) : null }),
+        mutationFn: ({ confirmPassword: _confirmPassword, roleId, representedCarrierId, plantId, ...formData }: CreateUserFormInput) => {
+            const payload = { ...formData, roleId: Number(roleId), representedCarrierId: isFieldRole && representedCarrierId ? Number(representedCarrierId) : null, plantId: plantId ? Number(plantId) : null }
+            if (isEditMode && userId) {
+                const { password, ...details } = payload
+                return updateUserApi({ id: userId, ...details, ...(password ? { password } : {}) })
+            }
+            return createUserApi(payload)
+        },
         onSuccess: (result) => {
             if (!result) return
             toast.success(result.message)
             queryClient.invalidateQueries({ queryKey: ["users"] })
+            queryClient.invalidateQueries({ queryKey: ["current-plant"] })
             navigate("/usuarios")
         },
         onError: (error) => toast.error(error.message),
     })
 
     const onSubmit = handleSubmit((formData) => {
-        saveMutation.mutate(formData)
+        if (!formUnavailable) saveMutation.mutate(formData)
     })
 
-    const isPending = saveMutation.isPending
+    const formUnavailable = rolesQuery.isLoading || rolesQuery.isError || plantsQuery.isLoading || plantsQuery.isError || (isEditMode && (userQuery.isLoading || userQuery.isError)) || (isFieldRole && (carriersQuery.isLoading || carriersQuery.isError))
+    const isPending = saveMutation.isPending || formUnavailable
     const roles = rolesQuery.data?.data ?? []
 
     const nameError = obtenerMensajeErrorCampo(errors.name)
@@ -71,9 +97,12 @@ export function UserFormView() {
 
     return (
         <PageContainer size="form">
-            <PageHeader icon={UserPlus} title={<>Nuevo usuario</>} description={<>Crea una cuenta de acceso y asígnale un rol</>} />
+            <PageHeader icon={isEditMode ? UserPen : UserPlus} title={isEditMode ? "Editar usuario" : "Nuevo usuario"} description={isEditMode ? "Actualiza los datos y el rol del usuario" : "Crea una cuenta de acceso y asígnale un rol"} />
 
             <FormPanel onSubmit={onSubmit}>
+                {isEditMode && userQuery.isLoading && <p role="status">Cargando usuario...</p>}
+                {isEditMode && userQuery.isError && <p role="alert" className="mb-4 text-sm text-error-fg">No se pudo cargar el usuario. Vuelve a la lista e intenta nuevamente.</p>}
+                {rolesQuery.isError && <p role="alert" className="mb-4 text-sm text-error-fg">No se pudieron cargar los roles. Intenta nuevamente.</p>}
                 <FormField label="Nombre completo" htmlFor="name" error={nameError}>
                     <Input
                         id="name"
@@ -124,6 +153,7 @@ export function UserFormView() {
                 </FormField>}
 
                 <FormField label="Contraseña" htmlFor="password" error={passwordError}>
+                    {isEditMode && <p className="mb-2 text-sm text-text-tertiary">Déjala vacía para conservar la contraseña actual.</p>}
                     <div className="relative">
                         <Input
                             id="password"
@@ -157,7 +187,7 @@ export function UserFormView() {
                     />
                 </FormField>
 
-                <FormActions onCancel={() => navigate("/usuarios")} isPending={isPending} />
+                <FormActions onCancel={() => navigate("/usuarios")} isPending={saveMutation.isPending} submitDisabled={formUnavailable} />
             </FormPanel>
         </PageContainer>
     )

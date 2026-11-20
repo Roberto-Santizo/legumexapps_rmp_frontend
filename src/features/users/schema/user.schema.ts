@@ -33,3 +33,10 @@ export const createUserFormSchema = z
 export type User = z.infer<typeof userSchema>
 export type CreateUserFormInput = z.infer<typeof createUserFormSchema>
 export type CreateUserPayload = Omit<CreateUserFormInput, "confirmPassword" | "roleId" | "representedCarrierId" | "plantId"> & { roleId: number; representedCarrierId?: number | null; plantId?: number | null }
+
+export const editUserFormSchema = createUserFormSchema.safeExtend({
+    password: z.union([z.literal(""), z.string().min(8, "Mínimo 8 caracteres").max(100, "Máximo 100 caracteres")]),
+    confirmPassword: z.string(),
+})
+
+export type UpdateUserPayload = Partial<CreateUserPayload>
