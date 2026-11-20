@@ -80,15 +80,15 @@ test("a reviewed spelling alias selects the official defect without creating ano
     assert(h.selector(h.render()).props.options.some(entry => entry.searchTerms.includes("DAÑOI MECANICO")))
 })
 
-test("new catalog entries carry classification; tolerance remains in the association", () => {
+test("catalog creation only asks for the name and leaves pest counting to the product", () => {
     const h = harness({ initial: { name: "", tolerancePercentage: 5, activo: true } })
     h.button(h.render(), "Crear nuevo defecto").props.onClick()
-    h.find(h.render(), node => node.props?.id === "modal-new-defect").props.onChange({ target: { value: "ÁFIDOS" } })
-    h.find(h.render(), node => node.props?.id === "modal-catalog-kind").props.onChange({ target: { value: "pest_count" } })
+    assert(!h.find(h.render(), node => node.props?.id === "modal-catalog-kind"))
+    h.find(h.render(), node => node.props?.id === "modal-new-defect").props.onChange({ target: { value: "MANCHAS" } })
     h.button(h.render(), "Crear y seleccionar").props.onClick()
-    assert.deepEqual(h.requests[0], { operation: "create", payload: { name: "ÁFIDOS", evaluationKind: "pest_count" } })
+    assert.deepEqual(h.requests[0], { operation: "create", payload: { name: "MANCHAS" } })
     assert.equal(h.values.tolerancePercentage, 5)
-    assert.equal(h.values.evaluationKind, "pest_count")
+    assert(!Object.hasOwn(h.values, "evaluationKind"))
 })
 
 test("catalog rename and availability are saved independently from product tolerance", () => {
@@ -100,6 +100,7 @@ test("catalog rename and availability are saved independently from product toler
     assert.equal(h.requests[0].operation, "update")
     assert.equal(h.requests[0].payload.activo, false)
     assert(!Object.hasOwn(h.requests[0].payload, "tolerancePercentage"))
+    assert(!Object.hasOwn(h.requests[0].payload, "evaluationKind"))
     assert.equal(h.values.tolerancePercentage, 5)
     assert.equal(h.values.name, "DAÑO MECÁNICO SUPERFICIAL")
     assert.equal(h.invalidations.find(options => options.queryKey[0] === "products").refetchType, "none", "Catalog changes must not reset unsaved fields in the parent product form")

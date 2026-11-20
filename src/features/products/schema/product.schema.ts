@@ -7,7 +7,6 @@ export const productDefectFormSchema = z.object({
     id: z.number().int().positive().optional(),
     defectCatalogId: z.number().int().positive().nullable().optional(),
     name: z.string().trim().min(1, "Ingresa el nombre del defecto").max(255, "Máximo 255 caracteres"),
-    evaluationKind: z.enum(["percentage", "pest_count"]).optional(),
     catalogActive: z.boolean().optional(),
     tolerancePercentage: z.number({ error: "Ingresa un porcentaje válido" }).min(0, "Debe estar entre 0 y 100").max(100, "Debe estar entre 0 y 100"),
     activo: z.boolean(),

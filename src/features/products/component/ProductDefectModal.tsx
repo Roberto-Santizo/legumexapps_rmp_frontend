@@ -14,7 +14,6 @@ import { Button } from "@/shared/component/button.component"
 import { Checkbox } from "@/shared/component/checkbox.component"
 import { FormField } from "@/shared/component/formField.component"
 import { Combobox } from "@/shared/component/combobox.component"
-import { Select } from "@/shared/component/select.component"
 import { useAuthentication } from "@/features/authentication/hook/useAuthentication"
 
 type Defect = ProductFormInput["defects"][number]
@@ -29,12 +28,11 @@ export function ProductDefectModal({ initial, editing, names, canAddAnother, onC
     const [creating, setCreating] = useState(false)
     const [catalogEdit, setCatalogEdit] = useState<DefectCatalogEntry | null>(null)
     const [newName, setNewName] = useState("")
-    const [evaluationKind, setEvaluationKind] = useState<"percentage" | "pest_count">("percentage")
     const [catalogActive, setCatalogActive] = useState(true)
     const { control, register, watch, handleSubmit, reset, setValue, setError, clearErrors, formState: { errors } } = useForm<Defect>({ resolver: zodResolver(productDefectFormSchema), defaultValues: { ...initial, defectCatalogId: initial.defectCatalogId ?? null } })
     const entries = catalogQuery.data?.data ?? []
     const catalog = initial.defectCatalogId && !entries.some(entry => entry.id === initial.defectCatalogId)
-        ? [...entries, { id: initial.defectCatalogId, name: initial.name, activo: initial.catalogActive ?? true, evaluationKind: initial.evaluationKind ?? "percentage", aliases: [] }]
+        ? [...entries, { id: initial.defectCatalogId, name: initial.name, activo: initial.catalogActive ?? true, aliases: [] }]
         : entries
     const selected = catalog.find(entry => entry.id === watch("defectCatalogId"))
     const linked = (name: string) => names.some(existing => normalizeDefectName(existing) === normalizeDefectName(name))
@@ -42,7 +40,6 @@ export function ProductDefectModal({ initial, editing, names, canAddAnother, onC
     function select(entry: DefectCatalogEntry | undefined) {
         setValue("defectCatalogId", entry?.id ?? null, { shouldDirty: true })
         setValue("name", entry?.name ?? "", { shouldDirty: true })
-        setValue("evaluationKind", entry?.evaluationKind, { shouldDirty: true })
         setValue("catalogActive", entry?.activo, { shouldDirty: true })
         clearErrors(["name", "defectCatalogId"])
     }
@@ -81,7 +78,7 @@ export function ProductDefectModal({ initial, editing, names, canAddAnother, onC
             return
         }
         if (catalogEdit) {
-            updateMutation.mutate({ id: catalogEdit.id, name, evaluationKind, activo: catalogActive })
+            updateMutation.mutate({ id: catalogEdit.id, name, activo: catalogActive })
             return
         }
         const key = normalizeDefectName(name)
@@ -95,7 +92,7 @@ export function ProductDefectModal({ initial, editing, names, canAddAnother, onC
             setCreating(false)
             setNewName("")
             toast.info("Este defecto ya existe; se seleccionó el registrado")
-        } else createMutation.mutate({ name, evaluationKind })
+        } else createMutation.mutate({ name })
     }
 
     function save(another: boolean) {
@@ -109,7 +106,7 @@ export function ProductDefectModal({ initial, editing, names, canAddAnother, onC
                 setError("name", { message: "Este defecto ya está relacionado con el producto" })
                 return
             }
-            onSave({ ...values, defectCatalogId: entry.id, name: entry.name, evaluationKind: entry.evaluationKind, catalogActive: entry.activo }, another)
+            onSave({ ...values, defectCatalogId: entry.id, name: entry.name, catalogActive: entry.activo }, another)
             if (another) reset({ name: "", defectCatalogId: null, tolerancePercentage: 0, activo: true })
         })
     }
@@ -131,20 +128,15 @@ export function ProductDefectModal({ initial, editing, names, canAddAnother, onC
             </FormField>
             {catalogQuery.isError && <Button type="button" variant="secondary" onClick={() => void catalogQuery.refetch()}>Volver a cargar catálogo</Button>}
             {canManage && !editingCatalog && <div className="mb-5 flex flex-wrap gap-2">
-                <Button type="button" variant="secondary" disabled={unavailable} onClick={() => { clearErrors("name"); createMutation.reset(); setNewName(""); setEvaluationKind("percentage"); setCreating(true) }}>Crear nuevo defecto</Button>
-                {selected && <Button type="button" variant="secondary" disabled={unavailable} onClick={() => { clearErrors("name"); updateMutation.reset(); setCatalogEdit(selected); setNewName(selected.name); setEvaluationKind(selected.evaluationKind); setCatalogActive(selected.activo) }}>Editar en catálogo</Button>}
+                <Button type="button" variant="secondary" disabled={unavailable} onClick={() => { clearErrors("name"); createMutation.reset(); setNewName(""); setCreating(true) }}>Crear nuevo defecto</Button>
+                {selected && <Button type="button" variant="secondary" disabled={unavailable} onClick={() => { clearErrors("name"); updateMutation.reset(); setCatalogEdit(selected); setNewName(selected.name); setCatalogActive(selected.activo) }}>Editar en catálogo</Button>}
             </div>}
             {canManage && editingCatalog && <div className="mb-5 rounded-xl border border-border-light p-4">
                 <FormField label={catalogEdit ? "Nombre oficial del defecto" : "Nombre del nuevo defecto"} htmlFor="modal-new-defect" error={createMutation.error?.message ?? updateMutation.error?.message}>
                     <Input id="modal-new-defect" maxLength={255} value={newName} disabled={writingCatalog} placeholder="Ej. PUDRICIÓN" onChange={event => { setNewName(event.target.value); clearErrors("name"); createMutation.reset(); updateMutation.reset() }} />
                 </FormField>
-                <FormField label="Tipo de evaluación" htmlFor="modal-catalog-kind">
-                    <Select id="modal-catalog-kind" value={evaluationKind} disabled={writingCatalog} onChange={event => setEvaluationKind(event.target.value as "percentage" | "pest_count")}>
-                        <option value="percentage">Porcentaje observado</option><option value="pest_count">Conteo de plagas (gusanos / áfidos)</option>
-                    </Select>
-                </FormField>
                 {catalogEdit && <Checkbox id="modal-catalog-active" label="Disponible para nuevas asociaciones" checked={catalogActive} disabled={writingCatalog} onChange={event => setCatalogActive(event.target.checked)} />}
-                <p className="mb-3 text-sm text-text-tertiary">El nombre y el tipo se comparten entre productos. La tolerancia es propia de cada producto. Los conteos se usan cuando el producto tiene habilitado el control de plagas.</p>
+                <p className="mb-3 text-sm text-text-tertiary">El nombre se comparte entre productos. La tolerancia se configura por separado para cada producto.</p>
                 <div className="flex flex-wrap gap-2">
                     <Button type="button" disabled={unavailable || !newName.trim()} onClick={create}>{writingCatalog ? "Guardando..." : catalogEdit ? "Guardar cambios del catálogo" : "Crear y seleccionar"}</Button>
                     <Button type="button" variant="secondary" disabled={writingCatalog} onClick={() => { setCreating(false); setCatalogEdit(null); clearErrors("name") }}>Volver al catálogo</Button>

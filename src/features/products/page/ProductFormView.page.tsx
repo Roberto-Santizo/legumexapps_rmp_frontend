@@ -185,7 +185,6 @@ export function ProductFormView() {
                 <div className="mb-6 rounded-xl border border-border-light p-4">
                     <Checkbox id="evaluatePests" label="Evaluar gusanos y áfidos" disabled={isPending} {...register("evaluatePests")} />
                     <p className="mt-2 text-sm text-text-tertiary">Criterio de brócoli: muestras de 11, 22, 44 y 66 lb según las canastas recibidas en planta. Para más de 500 canastas se revisan 66 lb, con consignación desde 11 gusanos o 3 cabezas con áfidos. Se evalúan conteos separados del porcentaje de calidad.</p>
-                    <p className="mt-2 text-sm text-text-tertiary">Los defectos clasificados en el catálogo como conteo de plagas se evalúan en ese apartado y quedan fuera del cálculo porcentual cuando este control está habilitado.</p>
                 </div>
                 <ProductDefectsEditor control={control} errors={errors} disabled={isPending} />
                 <FormActions onCancel={() => navigate("/productos")} isPending={isPending} />

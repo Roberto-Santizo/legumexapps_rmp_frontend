@@ -3,16 +3,14 @@ import api from "@/shared/api/api"
 import { manejarErrorApi } from "@/shared/api/manejarErrorApi"
 import { esquemaRespuestaLista, esquemaRespuestaMutacion } from "@/shared/api/respuestaApi.esquema"
 
-const evaluationKindSchema = z.enum(["percentage", "pest_count"])
 const defectCatalogSchema = z.object({
     id: z.number().int().positive(), name: z.string(), activo: z.boolean(),
-    evaluationKind: evaluationKindSchema.default("percentage"),
     aliases: z.array(z.object({ name: z.string(), normalizedName: z.string() })).default([]),
 })
 const listSchema = esquemaRespuestaLista(defectCatalogSchema)
 const mutationSchema = esquemaRespuestaMutacion(defectCatalogSchema)
 export type DefectCatalogEntry = z.infer<typeof defectCatalogSchema>
-export type DefectCatalogInput = { name: string; evaluationKind: z.infer<typeof evaluationKindSchema> }
+export type DefectCatalogInput = { name: string }
 
 export async function listDefectCatalogApi(includeInactive = false) {
     try { return listSchema.parse((await api.get("/products/defect-catalog", { params: { includeInactive } })).data) }
