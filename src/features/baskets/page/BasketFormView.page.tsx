@@ -34,8 +34,8 @@ export function BasketFormView() {
         formState: { errors },
     } = useForm({
         resolver: zodResolver(basketFormSchema),
-        defaultValues: { code: "", weight: 0 },
-        values: basketQuery.data ? { code: basketQuery.data.data.code, weight: basketQuery.data.data.weight } : undefined,
+        defaultValues: { name: "", weight: 0 },
+        values: basketQuery.data ? { name: basketQuery.data.data.name, weight: basketQuery.data.data.weight } : undefined,
     })
 
     const saveMutation = useMutation({
@@ -55,7 +55,7 @@ export function BasketFormView() {
     })
 
     const isPending = saveMutation.isPending
-    const codeError = obtenerMensajeErrorCampo(errors.code)
+    const nameError = obtenerMensajeErrorCampo(errors.name)
     const weightError = obtenerMensajeErrorCampo(errors.weight)
 
     return (
@@ -63,15 +63,15 @@ export function BasketFormView() {
             <PageHeader icon={PackageOpen} title={isEditMode ? "Editar canasta" : "Nueva canasta"} description={isEditMode ? "Actualiza el tipo de canasta" : "Registra un nuevo tipo de canasta"} />
 
             <FormPanel onSubmit={onSubmit}>
-                <FormField label="Nombre" htmlFor="code" required error={codeError}>
+                <FormField label="Nombre" htmlFor="name" required error={nameError}>
                     <Input
-                        id="code"
+                        id="name"
                         type="text"
                         maxLength={255}
                         placeholder="Ej. Canasta plástica 20"
-                        hasError={!!codeError}
+                        hasError={!!nameError}
                         disabled={isPending}
-                        {...register("code")}
+                        {...register("name")}
                     />
                 </FormField>
 

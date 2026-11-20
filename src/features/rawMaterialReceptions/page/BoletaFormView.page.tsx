@@ -225,7 +225,7 @@ export function BoletaFormView() {
         [productsQuery.data, originalField]
     )
     const basketOptions = useMemo(
-        () => includeHistoricalOption((basketsQuery.data?.data ?? []).map((basket) => ({ value: basket.id, label: basket.code, description: `${formatDecimal(basket.weight)} lb` })), originalField && { value: originalField.basket.id, label: originalField.basket.code }),
+        () => includeHistoricalOption((basketsQuery.data?.data ?? []).map((basket) => ({ value: basket.id, label: basket.name, description: `${formatDecimal(basket.weight)} lb` })), originalField && { value: originalField.basket.id, label: originalField.basket.name }),
         [basketsQuery.data, originalField]
     )
     const cdpOptions = useMemo(

@@ -163,7 +163,7 @@ export function ReceptionFormView({ editing = false }: { editing?: boolean }) {
         [productsQuery.data, detalleCampo]
     )
     const basketOptions = useMemo(
-        () => includeHistoricalOption((basketsQuery.data?.data ?? []).map((basket) => ({ value: basket.id, label: basket.code, description: `${formatDecimal(basket.weight)} lb` })), originalPlant && { value: originalPlant.basket.id, label: originalPlant.basket.code }),
+        () => includeHistoricalOption((basketsQuery.data?.data ?? []).map((basket) => ({ value: basket.id, label: basket.name, description: `${formatDecimal(basket.weight)} lb` })), originalPlant && { value: originalPlant.basket.id, label: originalPlant.basket.name }),
         [basketsQuery.data, originalPlant]
     )
 

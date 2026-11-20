@@ -80,7 +80,7 @@ export function BasketListView() {
                         <TableBody>
                             {baskets.map((basket) => (
                                 <TableRow key={basket.id}>
-                                    <Td className="font-medium">{basket.code}</Td>
+                                    <Td className="font-medium">{basket.name}</Td>
                                     <Td align="center" className="text-text-tertiary">
                                         {formatDecimal(basket.weight)}
                                     </Td>
@@ -96,7 +96,7 @@ export function BasketListView() {
                                             {canDelete && <button
                                                 type="button"
                                                 onClick={() => {
-                                                    if (window.confirm(`¿Eliminar la canasta "${basket.code}"?`)) {
+                                                    if (window.confirm(`¿Eliminar la canasta "${basket.name}"?`)) {
                                                         deleteMutation.mutate(basket.id)
                                                     }
                                                 }}
