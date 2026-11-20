@@ -52,7 +52,7 @@ export async function getProductApi(id: number) {
 
 export async function createProductApi(payload: CreateProductPayload) {
     try {
-        const { data } = await api.post("/products", payload)
+        const { data } = await api.post("/products", productPayload(payload))
         return mutacionProductoSchema.parse(data)
     } catch (error) {
         manejarErrorApi(error)
@@ -61,11 +61,15 @@ export async function createProductApi(payload: CreateProductPayload) {
 
 export async function updateProductApi({ id, ...payload }: CreateProductPayload & { id: number }) {
     try {
-        const { data } = await api.patch(`/products/${id}`, payload)
+        const { data } = await api.patch(`/products/${id}`, productPayload(payload))
         return mutacionProductoSchema.parse(data)
     } catch (error) {
         manejarErrorApi(error)
     }
+}
+
+function productPayload(payload: CreateProductPayload) {
+    return { ...payload, defects: payload.defects?.map(({ id, defectCatalogId, tolerancePercentage, activo }) => ({ id, defectCatalogId, tolerancePercentage, activo })) }
 }
 
 export async function deleteProductApi(id: number) {

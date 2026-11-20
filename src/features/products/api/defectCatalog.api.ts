@@ -3,17 +3,28 @@ import api from "@/shared/api/api"
 import { manejarErrorApi } from "@/shared/api/manejarErrorApi"
 import { esquemaRespuestaLista, esquemaRespuestaMutacion } from "@/shared/api/respuestaApi.esquema"
 
-const defectCatalogSchema = z.object({ id: z.number().int().positive(), name: z.string(), activo: z.boolean() })
+const evaluationKindSchema = z.enum(["percentage", "pest_count"])
+const defectCatalogSchema = z.object({
+    id: z.number().int().positive(), name: z.string(), activo: z.boolean(),
+    evaluationKind: evaluationKindSchema.default("percentage"),
+    aliases: z.array(z.object({ name: z.string(), normalizedName: z.string() })).default([]),
+})
 const listSchema = esquemaRespuestaLista(defectCatalogSchema)
 const mutationSchema = esquemaRespuestaMutacion(defectCatalogSchema)
 export type DefectCatalogEntry = z.infer<typeof defectCatalogSchema>
+export type DefectCatalogInput = { name: string; evaluationKind: z.infer<typeof evaluationKindSchema> }
 
-export async function listDefectCatalogApi() {
-    try { return listSchema.parse((await api.get("/products/defect-catalog")).data) }
+export async function listDefectCatalogApi(includeInactive = false) {
+    try { return listSchema.parse((await api.get("/products/defect-catalog", { params: { includeInactive } })).data) }
     catch (error) { manejarErrorApi(error) }
 }
 
-export async function createDefectCatalogApi(name: string) {
-    try { return mutationSchema.parse((await api.post("/products/defect-catalog", { name })).data) }
+export async function createDefectCatalogApi(input: DefectCatalogInput) {
+    try { return mutationSchema.parse((await api.post("/products/defect-catalog", input)).data) }
+    catch (error) { manejarErrorApi(error) }
+}
+
+export async function updateDefectCatalogApi({ id, ...input }: DefectCatalogInput & { id: number; activo: boolean }) {
+    try { return mutationSchema.parse((await api.patch(`/products/defect-catalog/${id}`, input)).data) }
     catch (error) { manejarErrorApi(error) }
 }

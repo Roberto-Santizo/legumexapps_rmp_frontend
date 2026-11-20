@@ -9,6 +9,7 @@ export type ComboboxOption = {
     value: number
     label: string
     description?: string
+    searchTerms?: string[]
 }
 
 type ComboboxProps = {
@@ -46,10 +47,10 @@ export function Combobox({
     const selectedOption = useMemo(() => options.find((option) => option.value === value) ?? null, [options, value])
 
     const filteredOptions = useMemo(() => {
-        const normalize = (value: string) => (ignoreAccents ? value.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : value).toLowerCase()
+        const normalize = (value: string) => (ignoreAccents ? value.toUpperCase().normalize("NFD").replace(/N\u0303/g, "Ñ").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ") : value).toLowerCase()
         const term = normalize(search.trim())
         if (!term) return options
-        return options.filter((option) => normalize(option.label).includes(term))
+        return options.filter((option) => [option.label, ...(option.searchTerms ?? [])].some(value => normalize(value).includes(term)))
     }, [options, search, ignoreAccents])
 
     useEffect(() => {

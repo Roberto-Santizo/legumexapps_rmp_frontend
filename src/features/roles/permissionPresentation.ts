@@ -16,6 +16,7 @@ const actions: Record<string, string> = {
     view: "Ver",
     manageCarrier: "Gestionar boletas del transportista asignado",
     create: "Crear",
+    manageDefects: "Administrar catálogo de defectos",
     edit: "Editar",
     delete: "Eliminar",
     editField: "Corregir campo",
@@ -27,7 +28,7 @@ const actions: Record<string, string> = {
     downloadDocuments: "Descargar boletas por fechas y productor",
 }
 
-const actionOrder = ["view", "manageCarrier", "create", "receive", "edit", "editField", "editReception", "assignGrn", "viewHistory", "downloadDocuments", "overrideEdit", "delete"]
+const actionOrder = ["view", "manageCarrier", "create", "receive", "edit", "manageDefects", "editField", "editReception", "assignGrn", "viewHistory", "downloadDocuments", "overrideEdit", "delete"]
 
 const workflowLabels: Record<string, { label: string; description: string }> = {
     "rawMaterialReceptions:downloadDocuments": { label: "Descargar boletas por fechas y productor", description: "Abrir el apartado de descarga, filtrar por fechas y productor, y descargar boletas amarillas y evaluaciones de calidad, individuales o en ZIP. Respeta el alcance de consulta del usuario. Debe asignarse expresamente a cada rol." },
