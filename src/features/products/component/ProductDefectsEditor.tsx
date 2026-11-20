@@ -21,7 +21,7 @@ export function ProductDefectsEditor({ control, errors, disabled }: Props) {
             <h2 id="product-defects-title" className="text-lg font-semibold text-dark">Defectos del producto ({fields.length})</h2>
             <Button type="button" disabled={!canAdd} onClick={() => setEditor(-1)}><Plus size={16} aria-hidden="true" /> Relacionar defecto</Button>
         </div>
-        <p className="mb-4 text-sm text-text-tertiary">Configura los defectos de este producto y variedad. Guarda el producto para aplicar los cambios.</p>
+        <p className="mb-4 text-sm text-text-tertiary">Selecciona defectos del catálogo y define la tolerancia de este producto. Cambiar un porcentaje no afecta a los demás productos. Guarda el producto para aplicar los cambios.</p>
         {!fields.length ? <p className="rounded-[10px] bg-bg-primary p-4 text-sm text-text-tertiary">Este producto todavía no tiene defectos relacionados.</p> :
             <ul aria-label="Defectos relacionados" className="max-h-[28rem] divide-y divide-border-light overflow-y-auto rounded-xl border border-border-light">
                 {fields.map((field, index) => {

@@ -21,6 +21,7 @@ type ComboboxProps = {
     disabled?: boolean
     loading?: boolean
     hasError?: boolean
+    ignoreAccents?: boolean
 }
 
 export function Combobox({
@@ -33,6 +34,7 @@ export function Combobox({
     disabled = false,
     loading = false,
     hasError = false,
+    ignoreAccents = false,
 }: ComboboxProps) {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState("")
@@ -44,10 +46,11 @@ export function Combobox({
     const selectedOption = useMemo(() => options.find((option) => option.value === value) ?? null, [options, value])
 
     const filteredOptions = useMemo(() => {
-        const term = search.trim().toLowerCase()
+        const normalize = (value: string) => (ignoreAccents ? value.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : value).toLowerCase()
+        const term = normalize(search.trim())
         if (!term) return options
-        return options.filter((option) => option.label.toLowerCase().includes(term))
-    }, [options, search])
+        return options.filter((option) => normalize(option.label).includes(term))
+    }, [options, search, ignoreAccents])
 
     useEffect(() => {
         function handlePointerOutside(event: MouseEvent | TouchEvent) {
