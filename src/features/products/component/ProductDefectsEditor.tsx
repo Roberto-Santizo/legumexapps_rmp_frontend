@@ -14,14 +14,15 @@ const emptyDefect = { name: "", tolerancePercentage: 0, activo: true }
 export function ProductDefectsEditor({ control, errors, disabled }: Props) {
     const { fields, append, update, remove } = useFieldArray({ control, name: "defects", keyName: "formKey" })
     const values = useWatch({ control, name: "defects" })
+    const productName = useWatch({ control, name: "name" })
     const [editor, setEditor] = useState<number | null>(null)
     const canAdd = !disabled && fields.length < 200
     return <section aria-labelledby="product-defects-title" className="mb-6 border-t border-border-light pt-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 id="product-defects-title" className="text-lg font-semibold text-dark">Defectos del producto ({fields.length})</h2>
-            <Button type="button" disabled={!canAdd} onClick={() => setEditor(-1)}><Plus size={16} aria-hidden="true" /> Relacionar defecto</Button>
+            <Button type="button" disabled={!canAdd} onClick={() => setEditor(-1)}><Plus size={16} aria-hidden="true" /> Agregar defecto</Button>
         </div>
-        <p className="mb-4 text-sm text-text-tertiary">Selecciona defectos del catálogo y define la tolerancia de este producto. Cambiar un porcentaje no afecta a los demás productos. Guarda el producto para aplicar los cambios.</p>
+        <p className="mb-4 text-sm text-text-tertiary">Agrega los defectos que vas a evaluar y la tolerancia permitida para cada uno en este producto.</p>
         {!fields.length ? <p className="rounded-[10px] bg-bg-primary p-4 text-sm text-text-tertiary">Este producto todavía no tiene defectos relacionados.</p> :
             <ul aria-label="Defectos relacionados" className="max-h-[28rem] divide-y divide-border-light overflow-y-auto rounded-xl border border-border-light">
                 {fields.map((field, index) => {
@@ -41,9 +42,8 @@ export function ProductDefectsEditor({ control, errors, disabled }: Props) {
                     </li>
                 })}
             </ul>}
-        {fields.length > 0 && <div className="mt-3 flex justify-end"><Button type="button" variant="secondary" disabled={!canAdd} onClick={() => setEditor(-1)}><Plus size={16} aria-hidden="true" /> Relacionar otro defecto</Button></div>}
         {errors.defects?.root?.message && <p role="alert" className="mt-2 text-sm text-error-fg">{errors.defects.root.message}</p>}
-        {editor !== null && <ProductDefectModal initial={editor < 0 ? emptyDefect : values[editor]} editing={editor >= 0}
+        {editor !== null && <ProductDefectModal initial={editor < 0 ? emptyDefect : values[editor]} editing={editor >= 0} productName={productName}
             names={values.filter((_, index) => index !== editor).map(defect => defect.name)} canAddAnother={fields.length < 199}
             onClose={() => setEditor(null)} onSave={(defect, another) => {
                 if (editor < 0) append(defect, { shouldFocus: false })
