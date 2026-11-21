@@ -5,7 +5,6 @@ import { esquemaRespuestaLista, esquemaRespuestaMutacion } from "@/shared/api/re
 
 const defectCatalogSchema = z.object({
     id: z.number().int().positive(), name: z.string(), activo: z.boolean(),
-    aliases: z.array(z.object({ name: z.string(), normalizedName: z.string() })).default([]),
 })
 const listSchema = esquemaRespuestaLista(defectCatalogSchema)
 const mutationSchema = esquemaRespuestaMutacion(defectCatalogSchema)

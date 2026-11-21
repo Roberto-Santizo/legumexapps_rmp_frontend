@@ -51,13 +51,13 @@ export function ProductDefectModal({ initial, editing, names, canAddAnother, pro
     })
     const entries = catalogQuery.data?.data ?? []
     const catalog = initial.defectCatalogId && !entries.some(entry => entry.id === initial.defectCatalogId)
-        ? [...entries, { id: initial.defectCatalogId, name: initial.name, activo: initial.catalogActive ?? true, aliases: [] }]
+        ? [...entries, { id: initial.defectCatalogId, name: initial.name, activo: initial.catalogActive ?? true }]
         : entries
     const selected = catalog.find(entry => entry.id === watch("defectCatalogId"))
     const linked = (name: string) => names.some(existing => normalizeDefectName(existing) === normalizeDefectName(name))
     const matchName = (name: string) => {
         const key = normalizeDefectName(name)
-        return catalog.find(entry => normalizeDefectName(entry.name) === key || entry.aliases.some(alias => alias.normalizedName === key))
+        return catalog.find(entry => normalizeDefectName(entry.name) === key)
     }
     const existingMatch = view.kind === "create" && newName.trim() ? matchName(newName) : undefined
     const productLabel = productName?.trim() || "este producto"
@@ -165,7 +165,7 @@ export function ProductDefectModal({ initial, editing, names, canAddAnother, pro
                     <FormField label="Defecto" htmlFor="modal-defect-catalog" required error={errors.name?.message ?? errors.defectCatalogId?.message}>
                         <Controller name="defectCatalogId" control={control} render={({ field }) => <Combobox
                             id="modal-defect-catalog" value={field.value ?? null} onChange={id => select(catalog.find(entry => entry.id === id))}
-                            options={catalog.filter(entry => !linked(entry.name) && (entry.activo || entry.id === initial.defectCatalogId)).map(entry => ({ value: entry.id, label: entry.name, description: entry.activo ? undefined : "Desactivado", searchTerms: entry.aliases.map(alias => alias.name) }))}
+                            options={catalog.filter(entry => !linked(entry.name) && (entry.activo || entry.id === initial.defectCatalogId)).map(entry => ({ value: entry.id, label: entry.name, description: entry.activo ? undefined : "Desactivado" }))}
                             placeholder="Busca un defecto por su nombre" emptyMessage="No hay coincidencias disponibles"
                             loading={catalogQuery.isLoading} disabled={unavailable} ignoreAccents hasError={!!errors.name || !!errors.defectCatalogId}
                         />} />

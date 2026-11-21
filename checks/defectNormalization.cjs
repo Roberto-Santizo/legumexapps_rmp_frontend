@@ -5,8 +5,8 @@ function harness({ initial = { name: "", tolerancePercentage: 0, activo: true },
     const state = [], values = { ...initial }, saved = [], requests = [], invalidations = []
     let cursor = 0, mutationCursor = 0, errors = {}
     let data = { data: [
-        { id: 1, name: "PUDRICIÓN", activo: true, evaluationKind: "percentage", aliases: [] },
-        { id: 2, name: "DAÑO MECÁNICO", activo: true, evaluationKind: "percentage", aliases: [{ name: "DAÑOI MECANICO", normalizedName: "DAÑOI MECANICO" }] },
+        { id: 1, name: "PUDRICIÓN", activo: true },
+        { id: 2, name: "DAÑO MECÁNICO", activo: true },
     ] }
     function Controller() {}
     const load = createSourceLoader({ mocks: {
@@ -27,7 +27,7 @@ function harness({ initial = { name: "", tolerancePercentage: 0, activo: true },
                 const index = mutationCursor++
                 return { isPending: false, reset() {}, mutate: payload => {
                     requests.push({ operation: index === 0 ? "create" : "update", payload })
-                    options.onSuccess({ message: "Guardado", data: { id: payload.id ?? 3, name: payload.name, activo: payload.activo ?? true, evaluationKind: payload.evaluationKind, aliases: [] } })
+                    options.onSuccess({ message: "Guardado", data: { id: payload.id ?? 3, name: payload.name, activo: payload.activo ?? true } })
                 } }
             },
         },
@@ -64,6 +64,8 @@ test("search normalization distinguishes Ñ while ignoring vowel accents and spa
     const { normalizeDefectName } = createSourceLoader()("@/features/products/utils/defectName")
     assert.equal(normalizeDefectName(" daN\u0303o   mecánico "), "DAÑO MECANICO")
     assert.notEqual(normalizeDefectName("CAÑA"), normalizeDefectName("CANA"))
+    assert.equal(normalizeDefectName("DIAMETRO<25MM"), normalizeDefectName("DIÁMETRO < 25 MM"))
+    assert.notEqual(normalizeDefectName("DIÁMETRO <25 MM"), normalizeDefectName("DIÁMETRO >25 MM"))
 })
 
 test("users without catalog management can select defects but cannot create or rename them", () => {
@@ -74,15 +76,15 @@ test("users without catalog management can select defects but cannot create or r
     assert.equal(h.selector(tree).props.disabled, false)
 })
 
-test("a reviewed spelling alias selects the official defect without creating another catalog row", () => {
+test("a matching name ignores accents and spaces without needing aliases", () => {
     const h = harness()
     h.button(h.render(), "Crear nuevo defecto").props.onClick()
-    h.find(h.render(), node => node.props?.id === "modal-new-defect").props.onChange({ target: { value: "DAÑOI MECANICO" } })
+    h.find(h.render(), node => node.props?.id === "modal-new-defect").props.onChange({ target: { value: " daño   mecanico " } })
     h.find(h.render(), node => node.type === "form").props.onSubmit({ preventDefault() {}, stopPropagation() {} })
     assert.deepEqual(h.requests, [])
     assert.equal(h.values.defectCatalogId, 2)
     assert.equal(h.values.name, "DAÑO MECÁNICO")
-    assert(h.selector(h.render()).props.options.some(entry => entry.searchTerms.includes("DAÑOI MECANICO")))
+    assert.equal(h.selector(h.render()).props.options.find(entry => entry.value === 2).label, "DAÑO MECÁNICO")
 })
 
 test("catalog creation only asks for the name and leaves pest counting to the product", () => {
