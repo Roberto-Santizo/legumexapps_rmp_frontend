@@ -30,7 +30,7 @@ export function ReceptionRowActions({ boleta, permissions, onAssignGrn, roleName
             type="button" onClick={() => onAssignGrn(boleta)} className="btn-icon btn-icon-primary" aria-label="Asignar GRN" title="Asignar GRN">
             <FileCheck2 size={16} aria-hidden="true" />
         </button>}
-        {boleta.status === "pendiente_evaluacion_calidad" && permissions.includes("qualityEvaluations:view") && permissions.includes("qualityEvaluations:create") && <Link
+        {boleta.requiresQualityEvaluation && boleta.status === "pendiente_evaluacion_calidad" && permissions.includes("qualityEvaluations:view") && permissions.includes("qualityEvaluations:create") && <Link
             to={`/boletas/${boleta.id}/calidad`} className="btn-icon btn-icon-primary" aria-label="Evaluar calidad" title="Evaluar calidad">
             <ClipboardCheck size={16} aria-hidden="true" />
         </Link>}

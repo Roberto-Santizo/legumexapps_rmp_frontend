@@ -27,6 +27,8 @@ const labels: Record<string, string> = {
     fincaId: "Finca", docDate: "Fecha", productId: "Producto", producerId: "Productor", carrierId: "Transportista", plateId: "Placa",
     cdpId: "CDP", inspectorName: "Inspector", pilotName: "Piloto", basketId: "Canasta", totalBaskets: "Cantidad de canastas",
     weight: "Peso bruto", grossWeight: "Peso bruto", netWeight: "Peso neto", weightBaskets: "Tara", validPounds: "Libras pagables",
+    requiresQualityEvaluation: "Requiere evaluación de calidad",
+    deliveredToPlant: "Producto puesto en planta",
     qualityPercentage: "% calidad", qualityDefinedInPlant: "% definido en planta", percentage: "% calidad",
     harvestDocNumber: "Hoja de cosechero", sampleUnits: "Unidades de muestra", observations: "Observaciones",
     inspectorSignature: "Firma inspector", driverSignature: "Firma piloto", prodSignature: "Firma productor", receptorSignature: "Firma receptor",

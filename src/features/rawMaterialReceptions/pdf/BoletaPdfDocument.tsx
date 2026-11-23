@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
     differenceRow: { height: 27, justifyContent: "center", paddingBottom: 5 },
     completion: { position: "absolute", bottom: 6, left: "43%" },
     signatures: { marginTop: 8 },
+    qualityNotice: { marginTop: 4, fontSize: 6.5, color: "#b91c1c", fontFamily: "Helvetica-Bold" },
     signatureRow: { flexDirection: "row", gap: 34, marginBottom: 4 },
     signature: { flex: 1, alignItems: "center" },
     signatureImageArea: { height: 19, width: "100%", alignItems: "center", justifyContent: "flex-end" },
@@ -140,6 +141,7 @@ export function BoletaPdfDocument({ boleta }: { boleta: RmReception }) {
                             {receipt.differences && <Svg width={11} height={11} viewBox="0 0 24 24" style={styles.completion}><Circle cx="12" cy="12" r="9" fill="none" stroke="#00c653" strokeWidth={1.5} /><Path d="M8 12l3 3 7-8" fill="none" stroke="#00c653" strokeWidth={1.5} /></Svg>}
                         </View>
                     </View>
+                    {receipt.qualityNotice && <Text style={styles.qualityNotice}>{receipt.qualityNotice}</Text>}
                     <View style={styles.signatures}>
                         <View style={styles.signatureRow}>{receipt.signatures.slice(0, 3).map(signature => <Signature key={signature.label} {...signature} />)}</View>
                         {receipt.signatures.length > 3 && <View style={styles.signatureRow}>{receipt.signatures.slice(3).map(signature => <Signature key={signature.label} {...signature} />)}<View style={styles.signature} /></View>}

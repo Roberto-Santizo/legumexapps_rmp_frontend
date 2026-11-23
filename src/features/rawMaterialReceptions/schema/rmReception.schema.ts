@@ -44,8 +44,8 @@ const fieldDataReceptionSchema = esquemaCatalogoBase.extend({
     cdpId: z.number().nullable(),
     cdp: cdpSchema.nullable().optional(),
     inspectorSignature: z.string(),
-    driverSignature: z.string(),
-    prodSignature: z.string(),
+    driverSignature: z.string().nullable(),
+    prodSignature: z.string().nullable(),
     product: productSchema,
     plate: plateSchema,
     carrier: carrierSchema,
@@ -67,6 +67,8 @@ const prodDataReceptionSchema = esquemaCatalogoBase.extend({
 })
 
 export const rmReceptionSchema = esquemaCatalogoBase.extend({
+    deliveredToPlant: z.boolean().default(false),
+    requiresQualityEvaluation: z.boolean().default(true),
     plantId: z.number().int().positive().nullable().optional(),
     plant: plantSchema.nullable().optional(),
     userId: z.number().int().positive().optional(),
@@ -88,6 +90,7 @@ export const rmReceptionSchema = esquemaCatalogoBase.extend({
 const fieldFormBaseSchema = (editing: boolean) => z
     .object({
         docDate: z.iso.date("Ingresa una fecha válida"),
+        deliveredToPlant: z.boolean(),
         fincaId: z.string().min(1, "Selecciona una finca"),
         carrierId: z.string().min(1, "Selecciona un transportista"),
         plateId: z.string().min(1, "Selecciona una placa"),
@@ -102,10 +105,14 @@ const fieldFormBaseSchema = (editing: boolean) => z
         noQualityPercentage: z.boolean(),
         qualityPercentage: z.number().optional(),
         inspectorSignature: z.string().nullable().refine((v) => editing || !!v, "La firma del inspector es obligatoria"),
-        driverSignature: z.string().nullable().refine((v) => editing || !!v?.trim(), "La firma del piloto es obligatoria"),
-        prodSignature: z.string().nullable().refine((v) => editing || !!v, "La firma del productor es obligatoria"),
+        driverSignature: z.string().nullable(),
+        prodSignature: z.string().nullable(),
     })
     .superRefine((data, ctx) => {
+        if (!editing && !data.deliveredToPlant) {
+            if (!data.driverSignature?.trim()) ctx.addIssue({ code: "custom", path: ["driverSignature"], message: "La firma del piloto es obligatoria" })
+            if (!data.prodSignature?.trim()) ctx.addIssue({ code: "custom", path: ["prodSignature"], message: "La firma del productor es obligatoria" })
+        }
         if (data.noQualityPercentage) return
 
         if (data.qualityPercentage === undefined || Number.isNaN(data.qualityPercentage)) {
@@ -154,6 +161,7 @@ export type CompleteReceptionPayload = {
 }
 
 export type CreateRmReceptionPayload = {
+    deliveredToPlant?: boolean
     docDate: string
     fincaId: number
     carrierId: number
@@ -168,12 +176,12 @@ export type CreateRmReceptionPayload = {
     totalBaskets: number
     qualityPercentage?: number
     inspectorSignature: string
-    driverSignature: string
-    prodSignature: string
+    driverSignature?: string | null
+    prodSignature?: string | null
 }
 
 export type EditMetadata = { reason: string; expectedVersion: number }
-export type EditFieldPayload = Omit<CreateRmReceptionPayload, "cdpId" | "qualityPercentage" | "inspectorSignature" | "driverSignature" | "prodSignature"> & EditMetadata & {
+export type EditFieldPayload = Omit<CreateRmReceptionPayload, "deliveredToPlant" | "cdpId" | "qualityPercentage" | "inspectorSignature" | "driverSignature" | "prodSignature"> & EditMetadata & {
     cdpId: number | null; qualityPercentage: number | null
 }
 export type EditReceptionPayload = Omit<CompleteReceptionPayload, "receptorSignature"> & EditMetadata

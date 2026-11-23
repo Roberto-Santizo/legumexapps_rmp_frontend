@@ -90,6 +90,7 @@ export function BoletaResumen({ boleta }: { boleta: RmReception }) {
                             {receipt.differences && <CircleCheck className="receipt-complete-mark" size={17} aria-label="Datos de planta registrados" />}
                         </section>
                     </div>
+                    {receipt.qualityNotice && <p className="receipt-quality-notice">{receipt.qualityNotice}</p>}
                     <section className="receipt-signatures" aria-label="Firmas">
                         {receipt.signatures.map(signature => (
                             <div className="receipt-signature" key={signature.label}>

@@ -208,6 +208,7 @@ export function ReceptionFormView({ editing = false }: { editing?: boolean }) {
             </div>
 
             <form onSubmit={onSubmit} className="space-y-6">
+                {!boleta.requiresQualityEvaluation && <p className="text-sm font-semibold text-error-fg">Este producto no requiere evaluación de calidad. Después de recibirlo, la boleta quedará pendiente de asignar GRN.</p>}
                 {editing && <EditNotice count={boleta.receptionEditCount} override={user?.permissions.includes("rawMaterialReceptions:overrideEdit") ?? false} />}
                 <Card>
                     <FormField label="Producto" htmlFor="productId" error={productError}>

@@ -16,7 +16,7 @@ const actions: Record<string, string> = {
     view: "Ver",
     manageCarrier: "Gestionar boletas del transportista asignado",
     create: "Crear",
-    manageDefects: "Administrar catálogo de defectos",
+    createInPlant: "Crear boleta con producto puesto en planta",
     edit: "Editar",
     delete: "Eliminar",
     editField: "Corregir campo",
@@ -28,16 +28,17 @@ const actions: Record<string, string> = {
     downloadDocuments: "Descargar boletas por fechas y productor",
 }
 
-const actionOrder = ["view", "manageCarrier", "create", "receive", "edit", "manageDefects", "editField", "editReception", "assignGrn", "viewHistory", "downloadDocuments", "overrideEdit", "delete"]
+const actionOrder = ["view", "manageCarrier", "create", "createInPlant", "receive", "edit", "editField", "editReception", "assignGrn", "viewHistory", "downloadDocuments", "overrideEdit", "delete"]
 
 const workflowLabels: Record<string, { label: string; description: string }> = {
+    "rawMaterialReceptions:createInPlant": { label: "Crear boleta con producto puesto en planta", description: "Habilita la opción Producto puesto en planta al crear una boleta. Registra también la recepción con los mismos pesos, canastas y firma del inspector. Requiere permiso para crear boletas y una planta asignada. Debe asignarse expresamente a cada rol." },
     "rawMaterialReceptions:downloadDocuments": { label: "Descargar boletas por fechas y productor", description: "Abrir el apartado de descarga, filtrar por fechas y productor, y descargar boletas amarillas y evaluaciones de calidad, individuales o en ZIP. Respeta el alcance de consulta del usuario. Debe asignarse expresamente a cada rol." },
     "rawMaterialReceptions:manageCarrier": { label: "Gestionar boletas del transportista asignado", description: "Permite al representante del rol Campo consultar las boletas y PDF de todos los usuarios de su transportista, y corregirlas según los permisos del apartado, sus etapas y límites. Requiere asignar el transportista en Usuarios. No permite acceder a otros transportistas." },
     "dashboard:view": { label: "Ver dashboard y descargar reportes", description: "Acceder al dashboard y exportar el reporte de boletas cerradas. Ver boletas no concede este acceso." },
     "rawMaterialReceptions:editField": { label: "Corregir datos de campo", description: "Hasta dos correcciones por boleta, antes de registrar la recepción en planta." },
     "rawMaterialReceptions:receive": { label: "Registrar recepción en planta", description: "Completar la recepción de una boleta pendiente. No permite asignar el GRN." },
-    "rawMaterialReceptions:editReception": { label: "Corregir recepción en planta", description: "Hasta dos correcciones por boleta, antes de guardar la evaluación de calidad." },
-    "rawMaterialReceptions:assignGrn": { label: "Asignar GRN y cerrar boleta", description: "Asignar el GRN una sola vez, después de evaluar calidad. No permite cambiar un GRN asignado." },
+    "rawMaterialReceptions:editReception": { label: "Corregir recepción en planta", description: "Hasta dos correcciones por boleta, antes de guardar calidad o, si no requiere evaluación, antes de asignar GRN." },
+    "rawMaterialReceptions:assignGrn": { label: "Asignar GRN y cerrar boleta", description: "Asignar el GRN una sola vez, después de evaluar calidad o de recibir un producto exento de evaluación. No permite cambiar un GRN asignado." },
     "rawMaterialReceptions:overrideEdit": { label: "Edición excepcional de boletas", description: "Corregir los tres apartados sin límite de cantidad ni etapa, incluso después del cierre. No permite cambiar el GRN ni administrar usuarios o roles." },
     "rawMaterialReceptions:viewHistory": { label: "Consultar historial de correcciones", description: "Consultar quién corrigió cada apartado, el motivo y los valores anteriores y nuevos." },
     "qualityEvaluations:edit": { label: "Corregir evaluación de calidad", description: "Hasta dos correcciones por boleta, antes de asignar el GRN, usando las tolerancias originales." },

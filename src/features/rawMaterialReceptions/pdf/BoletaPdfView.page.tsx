@@ -75,7 +75,7 @@ export function BoletaPdfView() {
 
             <BoletaResumen boleta={boleta} />
             {instance.error && <p role="alert" className="text-sm text-error-fg">No se pudo preparar el PDF. Vuelve a abrir la boleta para intentar nuevamente.</p>}
-            {boleta.qualityControlDocs?.map(doc => <QualityDocumentSection key={doc.id} boleta={boleta} doc={doc} />)}
+            {boleta.requiresQualityEvaluation && boleta.qualityControlDocs?.map(doc => <QualityDocumentSection key={doc.id} boleta={boleta} doc={doc} />)}
         </div>
     )
 }

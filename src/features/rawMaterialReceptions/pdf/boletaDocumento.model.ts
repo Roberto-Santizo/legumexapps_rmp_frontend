@@ -16,6 +16,8 @@ export const receiptCompany = {
     formCode: "R-PRO-MP-02",
 }
 
+export const qualityExemptionNotice = "Este producto no requiere evaluación por el departamento de Calidad."
+
 export function formatReceiptNumber(value: number | null | undefined, decimals = false): string {
     if (value === null || value === undefined || !Number.isFinite(value)) return ""
     return value.toLocaleString("en-US", { useGrouping: false, minimumFractionDigits: decimals || !Number.isInteger(value) ? 2 : 0, maximumFractionDigits: 2 })
@@ -26,8 +28,13 @@ export function buildReceiptModel(boleta: RmReception) {
     const plant = boleta.prodDataReceptions[0]
     const fieldValues = field ? construirDatosCampo(field) : null
     const plantValues = construirDatosPlanta(plant)
+    if (!boleta.requiresQualityEvaluation && plantValues) {
+        plantValues.porcentajeCalidad = null
+        plantValues.libras = null
+    }
     return {
         number: numeroDocumento(boleta.id),
+        qualityNotice: boleta.requiresQualityEvaluation ? "" : qualityExemptionNotice,
         date: formatGuatemalaDate(boleta.docDate),
         grn: boleta.grn ?? "",
         cdp: field?.cdp?.name ?? "",
@@ -44,9 +51,9 @@ export function buildReceiptModel(boleta: RmReception) {
         differences: fieldValues && plantValues ? calcularDiferencias(fieldValues, plantValues) : null,
         signatures: [
             { label: "Firma Receptor", src: plant?.receptorSignature, name: plant?.receptorName ?? "" },
-            { label: "Firma Piloto", src: field?.driverSignature },
+            ...(!boleta.deliveredToPlant ? [{ label: "Firma Piloto", src: field?.driverSignature }] : []),
             { label: "Firma Inspector", src: field?.inspectorSignature },
-            { label: "Firma Productor", src: field?.prodSignature },
+            ...(!boleta.deliveredToPlant ? [{ label: "Firma Productor", src: field?.prodSignature }] : []),
         ],
     }
 }

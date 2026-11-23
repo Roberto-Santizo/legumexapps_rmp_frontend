@@ -9,6 +9,7 @@
 }
 .receipt-scroll:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .receipt-quality-origin { margin-top: 3px; text-align: center; font-size: 10px; line-height: 1.2; }
+.receipt-quality-notice { margin-top: 10px; color: #b91c1c; font-weight: 700; font-size: 12px; }
 .receipt-document {
     min-width: 0;
     width: 100%;

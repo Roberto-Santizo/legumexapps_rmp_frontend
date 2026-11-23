@@ -3,7 +3,7 @@ import { PageHeader } from "@/shared/component/pageHeader.component"
 import { FormActions } from "@/shared/component/formActions.component"
 import { FormPanel } from "@/shared/component/formPanel.component"
 import { useNavigate, useParams } from "react-router-dom"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
@@ -14,7 +14,7 @@ import { createPlateApi, updatePlateApi, getPlateApi } from "@/features/plates/a
 import { listCarriersApi } from "@/features/carriers/api/carrier.api"
 import { FormField } from "@/shared/component/formField.component"
 import { Input } from "@/shared/component/input.component"
-import { Select } from "@/shared/component/select.component"
+import { Combobox } from "@/shared/component/combobox.component"
 import { obtenerMensajeErrorCampo } from "@/shared/validacion/obtenerMensajeErrorCampo"
 
 export function PlateFormView() {
@@ -37,6 +37,7 @@ export function PlateFormView() {
 
     const {
         register,
+        control,
         handleSubmit,
         formState: { errors },
     } = useForm<PlateFormInput>({
@@ -89,14 +90,13 @@ export function PlateFormView() {
                 </FormField>
 
                 <FormField label="Transportista" htmlFor="carrierId" error={carrierIdError}>
-                    <Select id="carrierId" hasError={!!carrierIdError} disabled={isPending} {...register("carrierId")}>
-                        <option value="">Selecciona un transportista</option>
-                        {carriers.map((carrier) => (
-                            <option key={carrier.id} value={carrier.id}>
-                                {carrier.name}
-                            </option>
-                        ))}
-                    </Select>
+                    <Controller name="carrierId" control={control} render={({ field }) => <Combobox
+                        id="carrierId" value={field.value ? Number(field.value) : null}
+                        onChange={value => field.onChange(value == null ? "" : String(value))}
+                        options={carriers.map(carrier => ({ value: carrier.id, label: carrier.name }))}
+                        placeholder="Selecciona un transportista" emptyMessage="No se encontraron transportistas"
+                        hasError={!!carrierIdError} disabled={isPending}
+                    />} />
                 </FormField>
 
                 <FormField label="Peso bruto máximo del camión (lb)" htmlFor="maxGrossWeight" required error={maxGrossWeightError}>

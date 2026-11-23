@@ -47,16 +47,18 @@ export function ProductFormView() {
     const {
         register,
         control,
+        watch,
         handleSubmit,
         formState: { errors },
     } = useForm({
         resolver: zodResolver(productFormSchema),
         mode: "onTouched",
-        defaultValues: { name: "", varietyProductId: "", acceptedPercentage: NaN, evaluatePests: false, defects: [] },
+        defaultValues: { name: "", varietyProductId: "", requiresQualityEvaluation: true, acceptedPercentage: null, evaluatePests: false, defects: [] },
         values: productQuery.data
             ? {
                   name: productQuery.data.data.name,
                   varietyProductId: String(productQuery.data.data.varietyProductId),
+                  requiresQualityEvaluation: productQuery.data.data.requiresQualityEvaluation,
                   acceptedPercentage: productQuery.data.data.acceptedPercentage,
                   evaluatePests: productQuery.data.data.evaluatePests ?? false,
                   defects: productQuery.data.data.defects ?? [],
@@ -69,7 +71,8 @@ export function ProductFormView() {
             const payload = {
                 name: formData.name,
                 varietyProductId: Number(formData.varietyProductId),
-                acceptedPercentage: formData.acceptedPercentage,
+                requiresQualityEvaluation: formData.requiresQualityEvaluation,
+                acceptedPercentage: formData.requiresQualityEvaluation ? formData.acceptedPercentage : null,
                 evaluatePests: formData.evaluatePests ?? false,
                 defects: formData.defects,
             }
@@ -100,6 +103,7 @@ export function ProductFormView() {
     })
 
     const isPending = saveMutation.isPending || statusMutation.isPending
+    const requiresQualityEvaluation = watch("requiresQualityEvaluation")
     const varietyProducts = varietyProductsQuery.data?.data ?? []
 
     const nameError = obtenerMensajeErrorCampo(errors.name)
@@ -166,27 +170,36 @@ export function ProductFormView() {
                     />
                 </FormField>
 
-                <FormField label="Porcentaje aceptado" htmlFor="acceptedPercentage" error={acceptedPercentageError}>
-                    <Input
-                        id="acceptedPercentage"
-                        type="number"
-                        inputMode="decimal"
-                        step="any"
-                        min={0}
-                        max={100}
-                        placeholder="Mayor que 0 y hasta 100"
-                        aria-invalid={!!acceptedPercentageError}
-                        hasError={!!acceptedPercentageError}
-                        disabled={isPending}
-                        {...register("acceptedPercentage", { valueAsNumber: true })}
-                    />
-                </FormField>
-
                 <div className="mb-6 rounded-xl border border-border-light p-4">
-                    <Checkbox id="evaluatePests" label="Evaluar gusanos y áfidos" disabled={isPending} {...register("evaluatePests")} />
-                    <p className="mt-2 text-sm text-text-tertiary">Criterio de brócoli: muestras de 11, 22, 44 y 66 lb según las canastas recibidas en planta. Para más de 500 canastas se revisan 66 lb, con consignación desde 11 gusanos o 3 cabezas con áfidos. Se evalúan conteos separados del porcentaje de calidad.</p>
+                    <Checkbox id="requiresQualityEvaluation" label="Requiere evaluación de calidad" disabled={isPending} {...register("requiresQualityEvaluation")} />
+                    <p className="mt-2 text-sm text-text-tertiary">Si no requiere evaluación, al recibir la boleta quedará pendiente de asignar GRN. Los datos de calidad de planta quedarán en blanco y no se generará el documento de calidad.</p>
                 </div>
-                <ProductDefectsEditor control={control} errors={errors} disabled={isPending} />
+
+                {requiresQualityEvaluation && (
+                    <>
+                        <FormField label="Porcentaje aceptado" htmlFor="acceptedPercentage" error={acceptedPercentageError}>
+                            <Input
+                                id="acceptedPercentage"
+                                type="number"
+                                inputMode="decimal"
+                                step="any"
+                                min={0}
+                                max={100}
+                                placeholder="Mayor que 0 y hasta 100"
+                                aria-invalid={!!acceptedPercentageError}
+                                hasError={!!acceptedPercentageError}
+                                disabled={isPending}
+                                {...register("acceptedPercentage", { setValueAs: value => value === "" ? null : Number(value) })}
+                            />
+                        </FormField>
+
+                        <div className="mb-6 rounded-xl border border-border-light p-4">
+                            <Checkbox id="evaluatePests" label="Evaluar gusanos y áfidos" disabled={isPending} {...register("evaluatePests")} />
+                            <p className="mt-2 text-sm text-text-tertiary">Criterio de brócoli: muestras de 11, 22, 44 y 66 lb según las canastas recibidas en planta. Para más de 500 canastas se revisan 66 lb, con consignación desde 11 gusanos o 3 cabezas con áfidos. Se evalúan conteos separados del porcentaje de calidad.</p>
+                        </div>
+                        <ProductDefectsEditor control={control} errors={errors} disabled={isPending} />
+                    </>
+                )}
                 <FormActions onCancel={() => navigate("/productos")} isPending={isPending} />
             </FormPanel>
         </PageContainer>

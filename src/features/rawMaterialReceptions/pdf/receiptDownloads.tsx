@@ -19,7 +19,7 @@ export async function receiptPdfFiles(boleta: RmReception, kind: ReceiptDownload
     signal?.throwIfAborted()
     // Use the latest saved evaluation, as in the individual document view.
     const quality = boleta.qualityControlDocs?.slice().sort((a, b) => b.id - a.id)[0]
-    if (kind !== "receipt" && quality) {
+    if (kind !== "receipt" && boleta.requiresQualityEvaluation && quality) {
         const model = buildQualityDocument(boleta, quality)
         files.push({ name: `${model.number}_${model.reference}.pdf`, blob: await pdf(<QualityPdfDocument model={model} />).toBlob() })
     }
@@ -40,14 +40,17 @@ export async function prepareReceiptDownload({ id, filters, kind, signal, onProg
     signal.throwIfAborted()
     if (!ids.length) throw new Error("No se encontraron boletas con esos filtros.")
     const files: Record<string, Uint8Array> = {}
-    let fileCount = 0, missingQuality = 0, bytes = 0
+    let fileCount = 0, missingQuality = 0, exemptQuality = 0, bytes = 0
     for (const [index, receiptId] of ids.entries()) {
         signal.throwIfAborted()
         onProgress(`Preparando boleta ${index + 1} de ${ids.length}...`)
         try {
             const { data: receipt } = await getReceptionDownloadDocumentApi(receiptId, signal)
             signal.throwIfAborted()
-            if (kind !== "receipt" && !receipt.qualityControlDocs?.length) missingQuality++
+            if (kind !== "receipt") {
+                if (!receipt.requiresQualityEvaluation) exemptQuality++
+                else if (!receipt.qualityControlDocs?.length) missingQuality++
+            }
             const generated = await receiptPdfFiles(receipt, kind, signal)
             signal.throwIfAborted()
             if (id !== undefined && generated.length === 1) {
@@ -65,14 +68,16 @@ export async function prepareReceiptDownload({ id, filters, kind, signal, onProg
             throw new Error(`No se pudo preparar LX2-${receiptId}. ${error instanceof Error ? error.message : "Intenta nuevamente."}`)
         }
     }
-    if (!fileCount) throw new Error("Las boletas seleccionadas aún no tienen evaluación de calidad.")
+    if (!fileCount) throw new Error(exemptQuality === ids.length
+        ? "Los productos de las boletas seleccionadas no requieren evaluación de calidad. Puedes descargar sus boletas amarillas."
+        : "Las boletas seleccionadas aún no tienen evaluación de calidad.")
     signal.throwIfAborted()
     onProgress("Preparando archivo ZIP...")
     // PDF streams are already compressed; storing them avoids blocking compression work.
     const archive = zipSync(files, { level: 0 })
     return {
         blob: new Blob([new Uint8Array(archive)], { type: "application/zip" }),
-        filename: id !== undefined ? `boletas_LX2-${id}.zip` : `boletas_${filters.startDate}_${filters.endDate}_${kind}.zip`,
+        filename: id !== undefined ? `boletas_LX2-${id}.zip` : `boletas_${filters.startDate}_${filters.endDate}${filters.producerId ? `_productor-${filters.producerId}` : ""}_${kind}.zip`,
         fileCount, missingQuality,
     }
 }

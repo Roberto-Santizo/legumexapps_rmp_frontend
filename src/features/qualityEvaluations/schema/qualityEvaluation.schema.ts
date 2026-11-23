@@ -5,7 +5,7 @@ import { pestRuleSchema } from "./pestEvaluation.schema"
 
 export const qualityContextSchema = z.object({ data: z.object({
     boleta: rmReceptionSchema,
-    defects: z.array(z.object({ id: z.number().int(), name: z.string(), tolerancePercentage: z.number(), activo: z.boolean() })),
+    defects: z.array(z.object({ id: z.number().int(), defectName: z.string(), tolerancePercentage: z.number(), activo: z.boolean() })),
     acceptedPercentage: z.number(), configurationVersion: z.string(),
     evaluation: qualityDocumentSchema.optional(),
     pestControl: z.object({ enabled: z.boolean(), rule: pestRuleSchema.nullable() }).optional(),

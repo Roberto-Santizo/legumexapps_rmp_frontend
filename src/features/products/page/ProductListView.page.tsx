@@ -86,7 +86,7 @@ export function ProductListView() {
                                     <Td className="font-medium">{product.name}</Td>
                                     <Td className="text-text-tertiary">{product.varietyProduct?.name ?? "—"}</Td>
                                     <Td align="center" className="text-text-tertiary">
-                                        {formatDecimal(product.acceptedPercentage)}%
+                                        {product.requiresQualityEvaluation ? `${formatDecimal(product.acceptedPercentage)}%` : "Sin evaluación de calidad"}
                                     </Td>
                                     <Td><Badge variant={product.activo ? "exito" : "error"}>{product.activo ? "Activo" : "Inactivo"}</Badge></Td>
                                     <Td align="center">

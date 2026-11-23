@@ -3,7 +3,7 @@ import { PageHeader } from "@/shared/component/pageHeader.component"
 import { FormActions } from "@/shared/component/formActions.component"
 import { FormPanel } from "@/shared/component/formPanel.component"
 import { useNavigate, useParams } from "react-router-dom"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
@@ -14,7 +14,7 @@ import { createCdpApi, updateCdpApi, getCdpApi } from "@/features/cdps/api/cdp.a
 import { listFincasApi } from "@/features/farms/api/finca.api"
 import { FormField } from "@/shared/component/formField.component"
 import { Input } from "@/shared/component/input.component"
-import { Select } from "@/shared/component/select.component"
+import { Combobox } from "@/shared/component/combobox.component"
 import { obtenerMensajeErrorCampo } from "@/shared/validacion/obtenerMensajeErrorCampo"
 
 export function CdpFormView() {
@@ -34,6 +34,7 @@ export function CdpFormView() {
 
     const {
         register,
+        control,
         handleSubmit,
         formState: { errors },
     } = useForm<CdpFormInput>({
@@ -83,14 +84,13 @@ export function CdpFormView() {
                 </FormField>
 
                 <FormField label="Finca" htmlFor="fincaId" error={fincaIdError}>
-                    <Select id="fincaId" hasError={!!fincaIdError} disabled={isPending} {...register("fincaId")}>
-                        <option value="">Selecciona una finca</option>
-                        {fincas.map((finca) => (
-                            <option key={finca.id} value={finca.id}>
-                                {finca.name}
-                            </option>
-                        ))}
-                    </Select>
+                    <Controller name="fincaId" control={control} render={({ field }) => <Combobox
+                        id="fincaId" value={field.value ? Number(field.value) : null}
+                        onChange={value => field.onChange(value == null ? "" : String(value))}
+                        options={fincas.map(finca => ({ value: finca.id, label: finca.name }))}
+                        placeholder="Selecciona una finca" emptyMessage="No se encontraron fincas"
+                        hasError={!!fincaIdError} disabled={isPending}
+                    />} />
                 </FormField>
 
                 <FormActions onCancel={() => navigate("/cdps")} isPending={isPending} />

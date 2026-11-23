@@ -9,7 +9,9 @@ import {
 } from "@/shared/api/respuestaApi.esquema"
 import { productSchema } from "@/features/products/schema/product.schema"
 import type { ProductFormInput } from "@/features/products/schema/product.schema"
+import { z } from "zod"
 
+const listaNombresDefectosSchema = esquemaRespuestaLista(z.string())
 const listaProductosSchema = esquemaRespuestaLista(productSchema)
 const listaProductosPaginadaSchema = esquemaRespuestaListaPaginada(productSchema)
 const productoSchema = esquemaRespuestaItem(productSchema)
@@ -18,9 +20,20 @@ const mutacionProductoSchema = esquemaRespuestaMutacion(productSchema)
 export type CreateProductPayload = {
     name: string
     varietyProductId: number
-    acceptedPercentage: number
+    requiresQualityEvaluation: boolean
+    acceptedPercentage: number | null
     evaluatePests?: boolean
     defects?: ProductFormInput["defects"]
+}
+
+// Nombres de defectos ya usados en otros productos, para sugerirlos.
+export async function listDefectNamesApi() {
+    try {
+        const { data } = await api.get("/products/defect-names")
+        return listaNombresDefectosSchema.parse(data)
+    } catch (error) {
+        manejarErrorApi(error)
+    }
 }
 
 export async function listProductsApi(search?: string) {
@@ -69,7 +82,7 @@ export async function updateProductApi({ id, ...payload }: CreateProductPayload 
 }
 
 function productPayload(payload: CreateProductPayload) {
-    return { ...payload, defects: payload.defects?.map(({ id, defectCatalogId, tolerancePercentage, activo }) => ({ id, defectCatalogId, tolerancePercentage, activo })) }
+    return { ...payload, defects: payload.defects?.map(({ id, defectName, tolerancePercentage, activo }) => ({ id, defectName, tolerancePercentage, activo })) }
 }
 
 export async function deleteProductApi(id: number) {

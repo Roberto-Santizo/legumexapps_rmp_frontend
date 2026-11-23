@@ -3,7 +3,8 @@ import { AssignGrnModal } from "../component/AssignGrnModal"
 import { ReceptionRowActions } from "../component/ReceptionRowActions"
 import { ReceiptDownloads } from "../component/ReceiptDownloads"
 import { useAuthentication } from "@/features/authentication/hook/useAuthentication"
-import { useEffect, useId, useMemo, useState } from "react"
+import { useEffect, useId, useMemo, useRef, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import type { ReactNode } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Search, X, ChevronDown } from "lucide-react"
@@ -52,21 +53,44 @@ function FilterField({ label, htmlFor, children }: { label: string; htmlFor: str
     )
 }
 
+// Los filtros y la página viven en la URL y se recuerdan en la pestaña hasta
+// "Limpiar filtros": al ver una boleta y regresar (botón del navegador o de la
+// aplicación) se recupera la misma búsqueda y la misma página.
+const FILTERS_STORAGE_KEY = "boletas:filtros"
+const FILTER_KEYS = ["receiptNumber", "grn", "startDate", "endDate", "producer", "inspector", "plate", "carrier", "status"] as const
+
+function readStoredFilters(): string {
+    try { return sessionStorage.getItem(FILTERS_STORAGE_KEY) ?? "" } catch { return "" }
+}
+
+function storeFilters(value: string) {
+    try {
+        if (value) sessionStorage.setItem(FILTERS_STORAGE_KEY, value)
+        else sessionStorage.removeItem(FILTERS_STORAGE_KEY)
+    } catch { /* El almacenamiento puede no estar disponible; la URL conserva los filtros. */ }
+}
+
+function initialStatus(value: string | null): "" | (typeof ESTADOS_BOLETA)[number] {
+    return ESTADOS_BOLETA.includes(value as (typeof ESTADOS_BOLETA)[number]) ? value as (typeof ESTADOS_BOLETA)[number] : ""
+}
+
 export function BoletaListView() {
     const [grnBoleta, setGrnBoleta] = useState<RmReception | null>(null)
     const { user } = useAuthentication()
-    const [receiptNumber, setReceiptNumber] = useState("")
-    const [grn, setGrn] = useState("")
-    const [startDate, setStartDate] = useState("")
-    const [endDate, setEndDate] = useState("")
-    const [producer, setProducer] = useState("")
-    const [inspector, setInspector] = useState("")
-    const [plate, setPlate] = useState("")
-    const [carrier, setCarrier] = useState("")
-    const [status, setStatus] = useState<"" | (typeof ESTADOS_BOLETA)[number]>("")
-    const [filtersOpen, setFiltersOpen] = useState(false)
+    const [searchParams, setSearchParams] = useSearchParams()
+    const [initial] = useState(() => searchParams.toString() ? new URLSearchParams(searchParams) : new URLSearchParams(readStoredFilters()))
+    const [receiptNumber, setReceiptNumber] = useState(initial.get("receiptNumber") ?? "")
+    const [grn, setGrn] = useState(initial.get("grn") ?? "")
+    const [startDate, setStartDate] = useState(initial.get("startDate") ?? "")
+    const [endDate, setEndDate] = useState(initial.get("endDate") ?? "")
+    const [producer, setProducer] = useState(initial.get("producer") ?? "")
+    const [inspector, setInspector] = useState(initial.get("inspector") ?? "")
+    const [plate, setPlate] = useState(initial.get("plate") ?? "")
+    const [carrier, setCarrier] = useState(initial.get("carrier") ?? "")
+    const [status, setStatus] = useState(initialStatus(initial.get("status")))
+    const [filtersOpen, setFiltersOpen] = useState(() => FILTER_KEYS.some(key => initial.get(key)))
     const filtersId = useId()
-    const [currentPage, setCurrentPage] = useState(1)
+    const [currentPage, setCurrentPage] = useState(() => Math.max(1, Number.parseInt(initial.get("page") ?? "1", 10) || 1))
 
     const debouncedProducer = useDebouncedValue(producer)
     const debouncedReceiptNumber = useDebouncedValue(receiptNumber)
@@ -96,9 +120,27 @@ export function BoletaListView() {
     const activeFilterCount = Object.values(filters).filter(Boolean).length
     const hasActiveFilters = activeFilterCount > 0
 
+    // Volver a la página 1 solo cuando el usuario cambia un filtro, no al restaurar la búsqueda.
+    const filtersKey = JSON.stringify(filters)
+    const previousFiltersKey = useRef(filtersKey)
     useEffect(() => {
+        if (previousFiltersKey.current === filtersKey) return
+        previousFiltersKey.current = filtersKey
         setCurrentPage(1)
-    }, [filters])
+    }, [filtersKey])
+
+    // Refleja la búsqueda en la URL (sin crear entradas nuevas en el historial) y la recuerda en la pestaña.
+    useEffect(() => {
+        const next = new URLSearchParams()
+        for (const key of FILTER_KEYS) {
+            const value = filters[key]
+            if (value) next.set(key, String(value))
+        }
+        if (currentPage > 1) next.set("page", String(currentPage))
+        const query = next.toString()
+        storeFilters(query)
+        if (query !== searchParams.toString()) setSearchParams(next, { replace: true })
+    }, [filters, currentPage, searchParams, setSearchParams])
 
     const boletasQuery = useQuery({
         queryKey: ["rm-receptions", currentPage, filters],
@@ -117,6 +159,8 @@ export function BoletaListView() {
         setPlate("")
         setCarrier("")
         setStatus("")
+        setCurrentPage(1)
+        storeFilters("")
     }
 
     const boletas = validDates && !boletasQuery.isError ? boletasQuery.data?.data ?? [] : []

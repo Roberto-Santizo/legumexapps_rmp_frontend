@@ -9,7 +9,7 @@ import { Plus, Trash2, Pencil } from "lucide-react"
 import { ProductDefectModal } from "./ProductDefectModal"
 
 type Props = { control: Control<ProductFormInput>; errors: FieldErrors<ProductFormInput>; disabled: boolean }
-const emptyDefect = { name: "", tolerancePercentage: 0, activo: true }
+const emptyDefect = { defectName: "", tolerancePercentage: 0, activo: true }
 
 export function ProductDefectsEditor({ control, errors, disabled }: Props) {
     const { fields, append, update, remove } = useFieldArray({ control, name: "defects", keyName: "formKey" })
@@ -30,21 +30,21 @@ export function ProductDefectsEditor({ control, errors, disabled }: Props) {
                     const error = errors.defects?.[index]
                     return <li key={field.formKey} className="flex flex-wrap items-center justify-between gap-3 bg-bg-primary p-4">
                         <div className="min-w-0 flex-1">
-                            <p className="break-words font-semibold text-dark">{defect.name}</p>
+                            <p className="break-words font-semibold text-dark">{defect.defectName}</p>
                             <p className="mt-1 text-sm text-text-tertiary">Tolerancia: {formatDecimal(defect.tolerancePercentage)} %</p>
-                            {(error?.name?.message || error?.tolerancePercentage?.message) && <p role="alert" className="mt-1 text-sm text-error-fg">{error.name?.message ?? error.tolerancePercentage?.message}</p>}
+                            {(error?.defectName?.message || error?.tolerancePercentage?.message) && <p role="alert" className="mt-1 text-sm text-error-fg">{error.defectName?.message ?? error.tolerancePercentage?.message}</p>}
                         </div>
                         <div className="flex items-center gap-3">
                             <Badge variant={defect.activo ? "exito" : "error"}>{defect.activo ? "Activo" : "Inactivo"}</Badge>
-                            <button type="button" disabled={disabled} aria-label={`Editar defecto ${defect.name}`} onClick={() => setEditor(index)} className="btn-icon btn-icon-primary"><Pencil size={17} /></button>
-                            {defect.id === undefined && <button type="button" disabled={disabled} aria-label={`Quitar defecto sin guardar ${defect.name}`} onClick={() => remove(index)} className="btn-icon"><Trash2 size={17} /></button>}
+                            <button type="button" disabled={disabled} aria-label={`Editar defecto ${defect.defectName}`} onClick={() => setEditor(index)} className="btn-icon btn-icon-primary"><Pencil size={17} /></button>
+                            {defect.id === undefined && <button type="button" disabled={disabled} aria-label={`Quitar defecto sin guardar ${defect.defectName}`} onClick={() => remove(index)} className="btn-icon"><Trash2 size={17} /></button>}
                         </div>
                     </li>
                 })}
             </ul>}
         {errors.defects?.root?.message && <p role="alert" className="mt-2 text-sm text-error-fg">{errors.defects.root.message}</p>}
         {editor !== null && <ProductDefectModal initial={editor < 0 ? emptyDefect : values[editor]} editing={editor >= 0} productName={productName}
-            names={values.filter((_, index) => index !== editor).map(defect => defect.name)} canAddAnother={fields.length < 199}
+            names={values.filter((_, index) => index !== editor).map(defect => defect.defectName)} canAddAnother={fields.length < 199}
             onClose={() => setEditor(null)} onSave={(defect, another) => {
                 if (editor < 0) append(defect, { shouldFocus: false })
                 else update(editor, defect)

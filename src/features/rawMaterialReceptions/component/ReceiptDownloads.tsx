@@ -5,11 +5,11 @@ import { ChevronDown, Download, LoaderCircle } from "lucide-react"
 import { Button } from "@/shared/component/button.component"
 import { Select } from "@/shared/component/select.component"
 import { DateInput } from "@/shared/component/dateInput.component"
-import { SearchInput } from "@/shared/component/searchInput.component"
+import { Combobox } from "@/shared/component/combobox.component"
 import { PaginationComponent } from "@/shared/component/pagination.component"
 import { Table, TableHead, TableBody, TableRow, Th, Td } from "@/shared/component/table.component"
 import { formatGuatemalaDate, isIsoDate } from "@/shared/utils/guatemalaDate"
-import { searchReceptionDownloadsApi } from "../api/rmReception.api"
+import { listDownloadProducersApi, searchReceptionDownloadsApi } from "../api/rmReception.api"
 import { useReceiptDownloads } from "../hook/useReceiptDownloads"
 import type { ReceiptDownloadKind } from "../pdf/receiptDownloads"
 
@@ -29,12 +29,18 @@ function ReceiptDownloadPanel() {
     const id = useId()
     const [startDate, setStartDate] = useState("")
     const [endDate, setEndDate] = useState("")
-    const [producer, setProducer] = useState("")
-    const [selection, setSelection] = useState<{ startDate: string; endDate: string; producer?: string } | null>(null)
+    const [producerId, setProducerId] = useState<number | null>(null)
+    const [selection, setSelection] = useState<{ startDate: string; endDate: string; producerId?: number } | null>(null)
+    const producersQuery = useQuery({ queryKey: ["download-producers"], queryFn: listDownloadProducersApi, staleTime: 5 * 60 * 1000 })
+    const producerOptions = (producersQuery.data?.data ?? []).map(producer => ({
+        value: producer.id, label: producer.name,
+        description: [producer.code, producer.activo ? "" : "Inactivo"].filter(Boolean).join(" · ") || undefined,
+    }))
+    const selectedProducer = producerOptions.find(option => option.value === selection?.producerId)
     const [page, setPage] = useState(1)
     const downloads = useReceiptDownloads()
     const valid = isIsoDate(startDate) && isIsoDate(endDate) && startDate <= endDate
-    const dirty = !selection || startDate !== selection.startDate || endDate !== selection.endDate || (producer.trim() || undefined) !== selection.producer
+    const dirty = !selection || startDate !== selection.startDate || endDate !== selection.endDate || (producerId ?? undefined) !== selection.producerId
     const query = useQuery({
         queryKey: ["receipt-download-search", selection, page],
         queryFn: ({ signal }) => searchReceptionDownloadsApi({ ...selection!, page }, signal),
@@ -48,7 +54,7 @@ function ReceiptDownloadPanel() {
         event.preventDefault()
         if (!valid) return
         setPage(1)
-        setSelection({ startDate, endDate, producer: producer.trim() || undefined })
+        setSelection({ startDate, endDate, producerId: producerId ?? undefined })
         if (!dirty && page === 1) void query.refetch()
     }
 
@@ -62,16 +68,23 @@ function ReceiptDownloadPanel() {
                 <div><label htmlFor={`${id}-to`} className="mb-1 block text-sm font-medium">Hasta</label>
                     <DateInput id={`${id}-to`} value={endDate} onChange={setEndDate} required min={isIsoDate(startDate) ? startDate : undefined} /></div>
                 <div><label htmlFor={`${id}-producer`} className="mb-1 block text-sm font-medium">Productor</label>
-                    <SearchInput id={`${id}-producer`} value={producer} onChange={setProducer} placeholder="Nombre del productor (opcional)" /></div>
+                    <Combobox id={`${id}-producer`} value={producerId} onChange={setProducerId} options={producerOptions}
+                        placeholder="Todos los productores" emptyMessage="No se encontraron productores"
+                        loading={producersQuery.isLoading} disabled={producersQuery.isError} /></div>
                 <Button type="submit" variant="secondary" className="self-end" disabled={!valid || query.isFetching}>Buscar boletas para descargar</Button>
             </fieldset>
         </form>
-        <p className="text-xs text-text-tertiary">Puedes buscar por el nombre o parte del nombre del productor. Déjalo vacío para incluir todos los del rango.</p>
+        <p className="text-xs text-text-tertiary">Selecciona un productor para descargar solo sus boletas dentro del rango. Déjalo vacío para incluir todos los productores.</p>
+        {producersQuery.isError && <p role="alert" className="text-sm text-error-fg">No se pudo cargar la lista de productores. Puedes descargar todas las boletas del rango.</p>}
         {startDate && endDate && !valid && <p role="alert" className="text-sm text-error-fg">Ingresa fechas válidas. Desde debe ser anterior o igual a Hasta.</p>}
         {query.isFetching && <p role="status" className="text-sm text-text-tertiary">Buscando boletas...</p>}
         {query.isError && <p role="alert" className="text-sm text-error-fg">{query.error.message}</p>}
         {selection && dirty && <p role="status" className="text-sm text-text-tertiary">Aplica los filtros con Buscar boletas para descargar.</p>}
         {ready && <>
+            <p role="status" className="text-sm text-dark">
+                Del <span className="font-semibold">{formatGuatemalaDate(selection!.startDate)}</span> al <span className="font-semibold">{formatGuatemalaDate(selection!.endDate)}</span>
+                {" · "}{selectedProducer ? <>Productor: <span className="font-semibold">{selectedProducer.label}</span></> : "Todos los productores"}
+            </p>
             {total === 0 ? <p role="status" className="text-sm text-text-tertiary">No se encontraron boletas con esas fechas y productor.</p> : <>
                 <Table><TableHead><TableRow><Th>Boleta</Th><Th>Fecha</Th><Th>Productor</Th><Th>Producto</Th><Th>Descargar PDF</Th></TableRow></TableHead>
                     <TableBody>{query.data!.data.map(receipt => <TableRow key={receipt.id}>

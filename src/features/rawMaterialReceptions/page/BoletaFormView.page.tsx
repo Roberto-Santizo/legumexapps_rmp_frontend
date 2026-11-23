@@ -20,6 +20,7 @@ import type { BoletaFormInput } from "@/features/rawMaterialReceptions/schema/rm
 import { createRmReceptionApi, getRmReceptionApi, editFieldApi } from "@/features/rawMaterialReceptions/api/rmReception.api"
 import { EditNotice } from "../component/EditNotice"
 import { EditReasonModal } from "../component/EditReasonModal"
+import { NoQualityConfirmModal } from "../component/NoQualityConfirmModal"
 import { canEditStage, canMutateReceipt } from "../utils/editPolicy"
 import { LoadingSpinner } from "@/shared/component/loadingSpinner.component"
 import { listProducersApi } from "@/features/producers/api/producer.api"
@@ -29,12 +30,12 @@ import { listPlatesApi } from "@/features/plates/api/plate.api"
 import { listProductsApi } from "@/features/products/api/product.api"
 import { listBasketsApi } from "@/features/baskets/api/basket.api"
 import { listCdpsApi } from "@/features/cdps/api/cdp.api"
+import { getCurrentPlantApi } from "@/features/plants/api/plant.api"
 import { useAuthentication } from "@/features/authentication/hook/useAuthentication"
 import { Card } from "@/shared/component/card.component"
 import { FormField } from "@/shared/component/formField.component"
 import { Input } from "@/shared/component/input.component"
 import { DateInput } from "@/shared/component/dateInput.component"
-import { Select } from "@/shared/component/select.component"
 import { Checkbox } from "@/shared/component/checkbox.component"
 import { Combobox } from "@/shared/component/combobox.component"
 import { SignaturePad } from "@/shared/component/signaturePad.component"
@@ -57,6 +58,7 @@ export function BoletaFormView() {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
     const { user } = useAuthentication()
+    const canCreateInPlant = user?.permissions.includes("rawMaterialReceptions:createInPlant") ?? false
     const carrierRepresentative = user?.role?.trim().toLocaleLowerCase("es") === "campo" && user.permissions.includes("rawMaterialReceptions:manageCarrier") && !!user.representedCarrierId
     const [dateEditable, setDateEditable] = useState(false)
     const [pilotEditable, setPilotEditable] = useState(false)
@@ -85,6 +87,7 @@ export function BoletaFormView() {
         mode: "onTouched",
         defaultValues: {
             docDate: guatemalaDate(),
+            deliveredToPlant: false,
             fincaId: "",
             carrierId: carrierRepresentative ? String(user!.representedCarrierId) : "",
             plateId: "",
@@ -105,7 +108,7 @@ export function BoletaFormView() {
         const field = receipt?.fieldDataReceptions[0]
         if (!receipt || !field || isDirty) return
         originalVersion.current = receipt.editVersion
-        reset({ docDate: guatemalaDate(new Date(receipt.docDate)), fincaId: String(receipt.finca.id), carrierId: String(field.carrier.id),
+        reset({ docDate: guatemalaDate(new Date(receipt.docDate)), deliveredToPlant: receipt.deliveredToPlant, fincaId: String(receipt.finca.id), carrierId: String(field.carrier.id),
             plateId: field.plate ? String(field.plate.id) : "", producerId: field.producer.id, productId: field.product.id, basketId: field.basket.id,
             cdpId: field.cdpId, inspectorName: field.inspectorName, pilotName: field.pilotName ?? "", weight: field.weight,
             totalBaskets: field.totalBaskets, noQualityPercentage: field.qualityPercentage === null || field.qualityDefinedInPlant === true,
@@ -114,9 +117,14 @@ export function BoletaFormView() {
     }, [receipt, reset, isDirty])
 
     const carrierId = watch("carrierId")
+    const deliveredToPlant = watch("deliveredToPlant")
+    const plantQuery = useQuery({ queryKey: ["current-plant"], queryFn: getCurrentPlantApi,
+        enabled: !editing && canCreateInPlant && deliveredToPlant, staleTime: 0 })
+    const missingPlant = !editing && deliveredToPlant && (!plantQuery.data?.data || plantQuery.isError || plantQuery.isFetching)
     const carriersQuery = useQuery({ queryKey: ["carriers"], queryFn: () => listCarriersApi() })
     const carrierIdNumber = carrierId ? Number(carrierId) : null
     const noQualityPercentage = watch("noQualityPercentage")
+    const [confirmingNoQuality, setConfirmingNoQuality] = useState(false)
     const weightValue = watch("weight")
     const totalBasketsValue = watch("totalBaskets")
     const basketIdValue = watch("basketId")
@@ -135,7 +143,7 @@ export function BoletaFormView() {
             ? netWeight * (qualityPercentageValue / 100)
             : null
 
-    const reviewKey = JSON.stringify([watch("docDate"), watch("fincaId"), watch("producerId"), watch("productId"), watch("cdpId"), carrierId, watch("plateId"), watch("pilotName"), watch("inspectorName"), basketIdValue, weightValue, totalBasketsValue, tara, qualityPercentageValue, noQualityPercentage])
+    const reviewKey = JSON.stringify([deliveredToPlant, watch("docDate"), watch("fincaId"), watch("producerId"), watch("productId"), watch("cdpId"), carrierId, watch("plateId"), watch("pilotName"), watch("inspectorName"), basketIdValue, weightValue, totalBasketsValue, tara, qualityPercentageValue, noQualityPercentage])
     const reviewed = reviewedKey === reviewKey
     const invalidWeight = netWeight !== null && netWeight < 0
     const dateRange = documentDateRange()
@@ -176,13 +184,13 @@ export function BoletaFormView() {
                 totalBaskets: formData.totalBaskets,
                 qualityPercentage: formData.noQualityPercentage ? undefined : formData.qualityPercentage,
                 inspectorSignature: formData.inspectorSignature!,
-                driverSignature: formData.driverSignature!,
-                prodSignature: formData.prodSignature!,
+                driverSignature: formData.deliveredToPlant ? null : formData.driverSignature,
+                prodSignature: formData.deliveredToPlant ? null : formData.prodSignature,
             }
             const { inspectorSignature: _inspectorSignature, driverSignature: _driverSignature, prodSignature: _prodSignature, ...editablePayload } = payload
             return editing ? editFieldApi(receptionId, { ...editablePayload, reason, expectedVersion: expectedVersion!,
                 cdpId: formData.cdpId ?? null, qualityPercentage: formData.noQualityPercentage ? null : formData.qualityPercentage!,
-            }) : createRmReceptionApi(payload)
+            }) : createRmReceptionApi({ ...payload, deliveredToPlant: formData.deliveredToPlant })
         },
         onSuccess: (result) => {
             if (!result) return
@@ -195,6 +203,8 @@ export function BoletaFormView() {
 
     const onSubmit = handleSubmit((formData) => {
         if (saveMutation.isPending) return
+        if (!editing && formData.deliveredToPlant && !canCreateInPlant) { toast.error("No tienes permiso para registrar producto puesto en planta."); return }
+        if (missingPlant) { toast.error("Necesitas una planta asignada y disponible para registrar producto puesto en planta."); return }
         if (truckWeightBlocked) { toast.error(truckWeightError ?? "Selecciona una placa válida antes de continuar."); return }
         if (invalidWeight) { toast.error("El peso bruto no puede ser menor que la tara."); return }
         if (!reviewed) { toast.error("Revisa y confirma los datos antes de firmar y guardar."); return }
@@ -258,6 +268,26 @@ export function BoletaFormView() {
             <PageHeader title={editing ? "Corregir datos de campo" : "Crear boleta materia prima"} description={editing ? `Boleta #${receptionId.toString().padStart(6, "0")}` : "Completa los datos de recepción en campo"} />
 
             <form onSubmit={onSubmit} className="space-y-6">
+                {!editing && canCreateInPlant && <Card>
+                    <Button type="button" variant={deliveredToPlant ? "primary" : "secondary"} aria-pressed={deliveredToPlant}
+                        disabled={isPending} onClick={() => {
+                            setValue("deliveredToPlant", !deliveredToPlant, { shouldDirty: true })
+                            if (!deliveredToPlant) setValue("inspectorName", user?.name ?? "", { shouldValidate: true })
+                            setValue("driverSignature", null)
+                            setValue("prodSignature", null)
+                            setValue("inspectorSignature", null)
+                            setReviewedKey("")
+                        }}>
+                        {deliveredToPlant && <Check size={16} />} Producto puesto en planta
+                    </Button>
+                    {deliveredToPlant && <div className="mt-3 space-y-2 text-sm">
+                        <p>Al guardar se registrará también la recepción con el mismo producto, peso bruto, canastas, tara y peso neto. La firma del inspector se usará como firma del receptor.</p>
+                        {plantQuery.data?.data ? <p className="font-semibold">Planta de recepción: {plantQuery.data.data.name}</p>
+                            : plantQuery.isFetching ? <p role="status">Consultando planta de recepción...</p>
+                            : <p role="alert" className="text-error-fg">{plantQuery.error?.message ?? "Tu usuario necesita una planta asignada para utilizar esta opción."}</p>}
+                    </div>}
+                </Card>}
+                {editing && receipt!.deliveredToPlant && <p className="text-sm font-semibold">Producto puesto en planta. La recepción se registró al crear esta boleta.</p>}
                 {editing && <EditNotice count={receipt!.fieldEditCount} override={user?.permissions.includes("rawMaterialReceptions:overrideEdit") ?? false} />}
                 <Card>
                     <SectionTitle>Datos generales</SectionTitle>
@@ -352,34 +382,37 @@ export function BoletaFormView() {
                 <Card>
                     <SectionTitle>Transporte</SectionTitle>
                     <FormField label="Transportista" htmlFor="carrierId" error={carrierError}>
-                        <Select id="carrierId" hasError={!!carrierError} disabled={isPending || carrierRepresentative} {...register("carrierId", { onChange: () => setValue("plateId", "") })}>
-                            <option value="">Selecciona un transportista</option>
-                            {originalField?.carrier && !carriersQuery.data?.data.some(carrier => carrier.id === originalField.carrier?.id) && <option value={originalField.carrier.id}>{originalField.carrier.name}</option>}
-                            {(carriersQuery.data?.data ?? []).filter(carrier => !carrierRepresentative || carrier.id === user?.representedCarrierId).map((carrier) => (
-                                <option key={carrier.id} value={carrier.id}>
-                                    {carrier.name}
-                                </option>
-                            ))}
-                        </Select>
+                        <Controller name="carrierId" control={control} render={({ field }) => <Combobox
+                            id="carrierId" value={field.value ? Number(field.value) : null}
+                            onChange={value => {
+                                const next = value == null ? "" : String(value)
+                                if (next !== field.value) setValue("plateId", "")
+                                field.onChange(next)
+                            }}
+                            options={[
+                                ...(originalField?.carrier && !carriersQuery.data?.data.some(carrier => carrier.id === originalField.carrier?.id)
+                                    ? [{ value: originalField.carrier.id, label: originalField.carrier.name }] : []),
+                                ...(carriersQuery.data?.data ?? []).filter(carrier => !carrierRepresentative || carrier.id === user?.representedCarrierId)
+                                    .map(carrier => ({ value: carrier.id, label: carrier.name })),
+                            ]}
+                            placeholder="Selecciona un transportista" emptyMessage="No se encontraron transportistas"
+                            loading={carriersQuery.isLoading} hasError={!!carrierError} disabled={isPending || carrierRepresentative}
+                        />} />
                     </FormField>
 
                     <FormField label="Placa" htmlFor="plateId" error={plateError}>
-                        <Select
-                            id="plateId"
-                            hasError={!!plateError}
-                            disabled={isPending || !carrierIdNumber}
-                            {...register("plateId")}
-                        >
-                            <option value="">
-                                {carrierIdNumber ? "Selecciona una placa" : "Primero selecciona un transportista"}
-                            </option>
-                            {originalField?.plate && carrierIdNumber === originalField.carrier?.id && !platesQuery.data?.data.some(plate => plate.id === originalField.plate?.id) && <option value={originalField.plate.id}>{originalField.plate.name}</option>}
-                            {(platesQuery.data?.data ?? []).map((plate) => (
-                                <option key={plate.id} value={plate.id}>
-                                    {plate.name}
-                                </option>
-                            ))}
-                        </Select>
+                        <Controller name="plateId" control={control} render={({ field }) => <Combobox
+                            id="plateId" value={field.value ? Number(field.value) : null}
+                            onChange={value => field.onChange(value == null ? "" : String(value))}
+                            options={[
+                                ...(originalField?.plate && carrierIdNumber === originalField.carrier?.id && !platesQuery.data?.data.some(plate => plate.id === originalField.plate?.id)
+                                    ? [{ value: originalField.plate.id, label: originalField.plate.name }] : []),
+                                ...(platesQuery.data?.data ?? []).map(plate => ({ value: plate.id, label: plate.name })),
+                            ]}
+                            placeholder={carrierIdNumber ? "Selecciona una placa" : "Primero selecciona un transportista"}
+                            emptyMessage="No se encontraron placas"
+                            loading={platesQuery.isLoading} hasError={!!plateError} disabled={isPending || !carrierIdNumber}
+                        />} />
                     </FormField>
 
                     <FormField label="Nombre del piloto" htmlFor="pilotName" error={pilotNameError}>
@@ -402,6 +435,7 @@ export function BoletaFormView() {
                             placeholder="Nombre completo"
                             hasError={!!inspectorNameError}
                             disabled={isPending}
+                            readOnly={deliveredToPlant && !editing}
                             {...register("inspectorName")}
                         />
                     </FormField>
@@ -495,9 +529,28 @@ export function BoletaFormView() {
                             label="Sin porcentaje de calidad (se define al recibir en planta)"
                             className="mt-2"
                             disabled={isPending}
-                            {...register("noQualityPercentage")}
+                            checked={noQualityPercentage}
+                            onChange={event => {
+                                // Marcar requiere confirmación; desmarcar es inmediato.
+                                if (event.target.checked) setConfirmingNoQuality(true)
+                                else setValue("noQualityPercentage", false, { shouldDirty: true, shouldValidate: true })
+                            }}
                         />
                     </FormField>
+                    {confirmingNoQuality && <NoQualityConfirmModal
+                        productLabel={(() => {
+                            const option = productOptions.find(item => item.value === watch("productId"))
+                            return option ? [option.label, option.description].filter(Boolean).join(" ") : undefined
+                        })()}
+                        onConfirm={() => {
+                            setValue("noQualityPercentage", true, { shouldDirty: true, shouldValidate: true })
+                            setConfirmingNoQuality(false)
+                        }}
+                        onCancel={() => {
+                            setConfirmingNoQuality(false)
+                            requestAnimationFrame(() => document.getElementById("qualityPercentage")?.focus())
+                        }}
+                    />}
 
                     <div className="rounded-[10px] border-[1.5px] border-border-light bg-bg-primary p-4">
                         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-tertiary">
@@ -530,7 +583,7 @@ export function BoletaFormView() {
                         onConfirm={value => setReviewedKey(value ? reviewKey : "")} disabled={isPending || truckWeightBlocked} />
 
                     {!editing && <>
-                    <FormField label="Firma del piloto" htmlFor="driverSignature" error={driverSignatureError}>
+                    {!deliveredToPlant && <FormField label="Firma del piloto" htmlFor="driverSignature" error={driverSignatureError}>
                         <Controller
                             control={control}
                             name="driverSignature"
@@ -544,7 +597,7 @@ export function BoletaFormView() {
                                 />
                             )}
                         />
-                    </FormField>
+                    </FormField>}
 
                     <FormField label="Firma del inspector" htmlFor="inspectorSignature" error={inspectorSignatureError}>
                         <Controller
@@ -562,7 +615,8 @@ export function BoletaFormView() {
                         />
                     </FormField>
 
-                    <FormField label="Firma del productor" htmlFor="prodSignature" error={prodSignatureError}>
+                    {deliveredToPlant && <p className="mb-4 text-sm text-text-tertiary">Esta firma corresponde también al receptor: {user?.name}.</p>}
+                    {!deliveredToPlant && <FormField label="Firma del productor" htmlFor="prodSignature" error={prodSignatureError}>
                         <Controller
                             control={control}
                             name="prodSignature"
@@ -576,11 +630,11 @@ export function BoletaFormView() {
                                 />
                             )}
                         />
-                    </FormField>
+                    </FormField>}
                     </>}
                 </Card>
 
-                <FormActions onCancel={() => navigate("/boletas")} isPending={isPending} submitDisabled={truckWeightBlocked} submitLabel={editing ? "Guardar corrección de campo" : "Guardar boleta"} />
+                <FormActions onCancel={() => navigate("/boletas")} isPending={isPending} submitDisabled={truckWeightBlocked || missingPlant} submitLabel={editing ? "Guardar corrección de campo" : deliveredToPlant ? "Guardar boleta y recepción" : "Guardar boleta"} />
             </form>
             {pendingEdit && <EditReasonModal isPending={isPending} error={saveMutation.error?.message}
                 onCancel={() => { setPendingEdit(null); saveMutation.reset() }}

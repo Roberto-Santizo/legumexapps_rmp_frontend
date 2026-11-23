@@ -23,6 +23,7 @@ export type RmReceptionFilters = {
     startDate?: string
     endDate?: string
     producer?: string
+    producerId?: number
     inspector?: string
     plate?: string
     carrier?: string
@@ -80,6 +81,19 @@ export async function getReceptionDownloadDocumentApi(id: number, signal?: Abort
     try {
         const { data } = await api.get(`/rm-receptions/${id}/download-document`, { signal })
         return boletaSchema.parse(data)
+    } catch (error) { manejarErrorApi(error) }
+}
+
+const productoresDescargaSchema = z.object({ data: z.array(z.object({
+    id: z.number().int().positive(), name: z.string(), code: z.string().nullable().optional(), activo: z.boolean(),
+})) })
+export type DownloadProducer = z.infer<typeof productoresDescargaSchema>["data"][number]
+
+// Productores para filtrar descargas; usa el permiso de descarga, no el de catálogo.
+export async function listDownloadProducersApi() {
+    try {
+        const { data } = await api.get("/rm-receptions/documents/producers")
+        return productoresDescargaSchema.parse(data)
     } catch (error) { manejarErrorApi(error) }
 }
 

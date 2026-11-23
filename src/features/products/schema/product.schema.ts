@@ -5,9 +5,7 @@ import { normalizeDefectName } from "../utils/defectName"
 
 export const productDefectFormSchema = z.object({
     id: z.number().int().positive().optional(),
-    defectCatalogId: z.number().int().positive().nullable().optional(),
-    name: z.string().trim().min(1, "Ingresa el nombre del defecto").max(255, "Máximo 255 caracteres"),
-    catalogActive: z.boolean().optional(),
+    defectName: z.string().trim().min(1, "Ingresa el nombre del defecto").max(255, "Máximo 255 caracteres"),
     tolerancePercentage: z.number({ error: "Ingresa un porcentaje válido" }).min(0, "Debe estar entre 0 y 100").max(100, "Debe estar entre 0 y 100"),
     activo: z.boolean(),
 })
@@ -15,7 +13,8 @@ export const productDefectFormSchema = z.object({
 export const productSchema = esquemaCatalogoBase.extend({
     name: z.string(),
     varietyProductId: z.number().int(),
-    acceptedPercentage: z.number(),
+    requiresQualityEvaluation: z.boolean().default(true),
+    acceptedPercentage: z.number().nullable(),
     evaluatePests: z.boolean().optional(),
     varietyProduct: varietyProductSchema.nullish(),
     defects: z.array(productDefectFormSchema.extend({ id: z.number().int() })).optional(),
@@ -24,19 +23,23 @@ export const productSchema = esquemaCatalogoBase.extend({
 export const productFormSchema = z.object({
     name: z.string().trim().min(1, "El nombre es obligatorio").max(255, "Máximo 255 caracteres"),
     varietyProductId: z.string().min(1, "Selecciona una variedad"),
-    acceptedPercentage: z.number({ error: "Ingresa un porcentaje válido" }).positive("Debe ser mayor que 0").max(100, "No puede ser mayor que 100"),
+    requiresQualityEvaluation: z.boolean(),
+    acceptedPercentage: z.number({ error: "Ingresa un porcentaje válido" }).nullable(),
     evaluatePests: z.boolean().optional(),
     defects: z.array(productDefectFormSchema).max(200, "Máximo 200 defectos por producto").superRefine((defects, ctx) => {
         const names = new Set<string>()
-        const catalogIds = new Set<number>()
         defects.forEach((defect, index) => {
-            if (defect.defectCatalogId == null) ctx.addIssue({ code: "custom", path: [index, "defectCatalogId"], message: "Selecciona un defecto del catálogo" })
-            const name = normalizeDefectName(defect.name)
-            if (names.has(name) || (defect.defectCatalogId != null && catalogIds.has(defect.defectCatalogId))) ctx.addIssue({ code: "custom", path: [index, "name"], message: "Este defecto ya está relacionado" })
+            const name = normalizeDefectName(defect.defectName)
+            if (names.has(name)) ctx.addIssue({ code: "custom", path: [index, "defectName"], message: "Este defecto ya está relacionado" })
             names.add(name)
-            if (defect.defectCatalogId != null) catalogIds.add(defect.defectCatalogId)
         })
     }),
+}).superRefine((value, ctx) => {
+    if (!value.requiresQualityEvaluation) return
+    const percentage = value.acceptedPercentage
+    const message = percentage === null ? "Ingresa el porcentaje aceptado"
+        : percentage <= 0 ? "Debe ser mayor que 0" : percentage > 100 ? "No puede ser mayor que 100" : null
+    if (message) ctx.addIssue({ code: "custom", path: ["acceptedPercentage"], message })
 })
 
 export type Product = z.infer<typeof productSchema>

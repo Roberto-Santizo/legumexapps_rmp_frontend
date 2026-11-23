@@ -73,7 +73,7 @@ export function QualityEvaluation({ editing = false }: { editing?: boolean }) {
             pestInspection: context.pestControl?.rule ? {
                 wormCount: evaluation?.pestEvaluation?.wormCount ?? null, aphidHeadsCount: evaluation?.pestEvaluation?.aphidHeadsCount ?? null,
             } : null,
-            defects: context.defects.map(defect => ({ defectId: defect.id, name: defect.name, tolerancePercentage: defect.tolerancePercentage,
+            defects: context.defects.map(defect => ({ defectId: defect.id, name: defect.defectName, tolerancePercentage: defect.tolerancePercentage,
                 input: evaluation?.qualityControlDefects.find(item => item.id === defect.id)?.input ?? 0 })),
         })
     }, [context, evaluation, reset, isDirty])
@@ -159,10 +159,10 @@ export function QualityEvaluation({ editing = false }: { editing?: boolean }) {
                 </p> : <Table className="quality-defects-table">
                     <TableHead><TableRow><Th>Defecto</Th><Th>% defecto observado</Th><Th>% tolerancia aceptada</Th><Th>Resultado</Th></TableRow></TableHead>
                     <TableBody>{context.defects.map((defect, index) => <TableRow key={defect.id}>
-                        <Td className="font-semibold">{defect.name}</Td>
+                        <Td className="font-semibold">{defect.defectName}</Td>
                         <Td><div className="min-w-32 max-w-48">
                             <Input id={`quality-defect-${defect.id}`} type="number" inputMode="decimal" min={0} max={100} step="any"
-                                aria-label={`Porcentaje observado: ${defect.name}`} aria-describedby={errors.defects?.[index]?.input ? `quality-defect-error-${defect.id}` : undefined}
+                                aria-label={`Porcentaje observado: ${defect.defectName}`} aria-describedby={errors.defects?.[index]?.input ? `quality-defect-error-${defect.id}` : undefined}
                                 hasError={!!errors.defects?.[index]?.input} disabled={blocked} {...register(`defects.${index}.input`, { valueAsNumber: true })} />
                             {errors.defects?.[index]?.input?.message && <p id={`quality-defect-error-${defect.id}`} role="alert" className="mt-1 text-xs text-error-fg">{errors.defects[index]?.input?.message}</p>}
                         </div></Td>
