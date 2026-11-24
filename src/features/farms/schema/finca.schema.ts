@@ -3,8 +3,6 @@ import { esquemaCatalogoBase } from "@/shared/esquema/catalogoBase.esquema"
 
 export const fincaSchema = esquemaCatalogoBase.extend({
     name: z.string(),
-    code: z.string().nullable().optional(),
-    terminalId: z.number().int().nullable().optional(),
 })
 
 export type Finca = z.infer<typeof fincaSchema>
