@@ -27,6 +27,7 @@ import { EditReasonModal } from "@/features/rawMaterialReceptions/component/Edit
 import "../styles/qualityEvaluation.css"
 import { canMutateReceipt } from "@/features/rawMaterialReceptions/utils/editPolicy"
 import { PestInspectionFields } from "../component/PestInspectionFields"
+import { ProductSpecificationLink } from "../component/ProductSpecificationLink"
 import { calculatePestPreview } from "../utils/pestEvaluation"
 
 function ReadonlyField({ label, value, id }: { label: string; value: string | number; id: string }) {
@@ -117,7 +118,10 @@ export function QualityEvaluation({ editing = false }: { editing?: boolean }) {
     </PageContainer>
 
     return <PageContainer size="wide" className="pb-10">
-        <PageHeader icon={ClipboardCheck} title={editing ? "Corregir evaluación de calidad" : "Evaluación de calidad"} description={`Boleta #${receptionId.toString().padStart(6, "0")}`} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+            <PageHeader icon={ClipboardCheck} title={editing ? "Corregir evaluación de calidad" : "Evaluación de calidad"} description={`Boleta #${receptionId.toString().padStart(6, "0")}`} />
+            <ProductSpecificationLink productName={field.product.name} />
+        </div>
         <form noValidate onSubmit={handleSubmit(values => {
             if (!productConfirmed || saveMutation.isPending) return
             const submission = { values, expectedVersion: originalContext.current?.version ?? context.boleta.editVersion, configurationVersion: originalContext.current?.configuration ?? context.configurationVersion }

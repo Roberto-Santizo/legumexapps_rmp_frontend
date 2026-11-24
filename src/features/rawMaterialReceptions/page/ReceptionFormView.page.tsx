@@ -230,6 +230,25 @@ export function ReceptionFormView({ editing = false }: { editing?: boolean }) {
                         />
                     </FormField>
 
+                    <FormField label="Peso bruto (lb)" htmlFor="grossWeight" error={grossWeightError}>
+                        <Input
+                            id="grossWeight"
+                            required
+                            aria-describedby="plant-gross-weight-warning"
+                            type="number"
+                            inputMode="decimal"
+                            step="any"
+                            min={Number.MIN_VALUE}
+                            placeholder="0.00"
+                            hasError={!!grossWeightError || !!truckWeightError}
+                            disabled={camposBloqueados}
+                            {...register("grossWeight", { valueAsNumber: true })}
+                        />
+                        <GrossWeightWarning id="plant-gross-weight-warning" value={grossWeightValue} plate={detalleCampo?.plate} validate={validateTruckWeight} />
+                        {truckWeightError && !detalleCampo?.plate && <p role="alert" className="mt-2 text-sm text-error-fg">{truckWeightError}</p>}
+                        {invalidWeight && <p role="alert" className="mt-2 text-sm text-error-fg">El peso bruto no puede ser menor que la tara.</p>}
+                    </FormField>
+
                     <FormField label="Cantidad de canastas" htmlFor="totalBaskets" error={totalBasketsError}>
                         <Input
                             id="totalBaskets"
@@ -262,25 +281,6 @@ export function ReceptionFormView({ editing = false }: { editing?: boolean }) {
                                 />
                             )}
                         />
-                    </FormField>
-
-                    <FormField label="Peso bruto (lb)" htmlFor="grossWeight" error={grossWeightError}>
-                        <Input
-                            id="grossWeight"
-                            required
-                            aria-describedby="plant-gross-weight-warning"
-                            type="number"
-                            inputMode="decimal"
-                            step="any"
-                            min={Number.MIN_VALUE}
-                            placeholder="0.00"
-                            hasError={!!grossWeightError || !!truckWeightError}
-                            disabled={camposBloqueados}
-                            {...register("grossWeight", { valueAsNumber: true })}
-                        />
-                        <GrossWeightWarning id="plant-gross-weight-warning" value={grossWeightValue} plate={detalleCampo?.plate} validate={validateTruckWeight} />
-                        {truckWeightError && !detalleCampo?.plate && <p role="alert" className="mt-2 text-sm text-error-fg">{truckWeightError}</p>}
-                        {invalidWeight && <p role="alert" className="mt-2 text-sm text-error-fg">El peso bruto no puede ser menor que la tara.</p>}
                     </FormField>
 
                     {montosMuyAltos && (
