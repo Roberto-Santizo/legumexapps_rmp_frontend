@@ -25,6 +25,8 @@ type ComboboxProps = {
     hasError?: boolean
     /** Se conserva por compatibilidad: la búsqueda siempre ignora tildes. */
     ignoreAccents?: boolean
+    /** El campo es un input: se escribe directamente sobre él para filtrar (en escritorio). */
+    searchInField?: boolean
 }
 
 const MOBILE_QUERY = "(max-width: 639px)"
@@ -91,6 +93,7 @@ export function Combobox({
     disabled = false,
     loading = false,
     hasError = false,
+    searchInField = false,
 }: ComboboxProps) {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState("")
@@ -98,12 +101,15 @@ export function Combobox({
     const [openUpward, setOpenUpward] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
     const triggerRef = useRef<HTMLButtonElement>(null)
+    const fieldRef = useRef<HTMLInputElement>(null)
     const searchRef = useRef<HTMLInputElement>(null)
     const listRef = useRef<HTMLUListElement>(null)
     const listId = useId()
     const optionId = useId()
     const accessibility = useFieldAccessibility(hasError)
     const mobile = useIsMobile()
+    // En celular se mantiene la hoja a pantalla completa, que ya trae su propio buscador.
+    const inlineSearch = searchInField && !mobile
 
     const selectedOption = useMemo(() => options.find(option => option.value === value) ?? null, [options, value])
     const terms = useMemo(() => normalize(search).split(" ").filter(Boolean), [search])
@@ -111,7 +117,7 @@ export function Combobox({
 
     function openList(initialSearch = "") {
         if (disabled) return
-        const rect = triggerRef.current?.getBoundingClientRect()
+        const rect = containerRef.current?.getBoundingClientRect()
         if (rect) {
             const below = window.innerHeight - rect.bottom
             setOpenUpward(below < DROPDOWN_HEIGHT && rect.top > below)
@@ -125,7 +131,12 @@ export function Combobox({
     function closeList(returnFocus = true) {
         setOpen(false)
         setSearch("")
-        if (returnFocus) triggerRef.current?.focus()
+        if (returnFocus) focusField()
+    }
+
+    function focusField() {
+        if (inlineSearch) fieldRef.current?.focus()
+        else triggerRef.current?.focus()
     }
 
     // Cerrar al tocar fuera (solo en escritorio; en celular la hoja ocupa la pantalla).
@@ -171,7 +182,18 @@ export function Combobox({
         event.stopPropagation()
         onChange(null)
         setSearch("")
-        triggerRef.current?.focus()
+        focusField()
+    }
+
+    function handleFieldKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+        if (!open) {
+            if (["ArrowDown", "ArrowUp", "Enter"].includes(event.key)) {
+                event.preventDefault()
+                openList()
+            }
+            return
+        }
+        handleSearchKeyDown(event)
     }
 
     function handleTriggerKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
@@ -217,6 +239,7 @@ export function Combobox({
             aria-modal={mobile ? true : undefined}
             aria-label={mobile ? placeholder : undefined}
         >
+            {inlineSearch && <p aria-live="polite" className="border-b border-border-light px-4 py-1.5 text-xs text-text-tertiary">{resultsLabel}</p>}
             {mobile && <div className="flex items-center justify-between gap-3 border-b border-border-light px-4 py-3">
                 <p className="truncate text-base font-semibold text-dark">{placeholder}</p>
                 <button type="button" onClick={() => closeList()} aria-label="Cerrar búsqueda"
@@ -224,7 +247,7 @@ export function Combobox({
                     <X size={20} aria-hidden="true" />
                 </button>
             </div>}
-            <div className="border-b border-border-light p-2">
+            {!inlineSearch && <div className="border-b border-border-light p-2">
                 <div className="relative">
                     <Search size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
                     <input
@@ -255,7 +278,7 @@ export function Combobox({
                     </button>}
                 </div>
                 <p aria-live="polite" className="mt-1.5 px-1 text-xs text-text-tertiary">{resultsLabel}</p>
-            </div>
+            </div>}
             <ul ref={listRef} id={listId} role="listbox" aria-label="Opciones disponibles"
                 className={mobile ? "flex-1 overflow-y-auto overscroll-contain py-1" : "max-h-64 overflow-y-auto overscroll-contain py-1"}>
                 {!loading && filteredOptions.length === 0 && (
@@ -291,7 +314,35 @@ export function Combobox({
 
     return (
         <div ref={containerRef} className="relative">
-            <button
+            {inlineSearch ? <div className="relative">
+                <input
+                    id={id}
+                    ref={fieldRef}
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-expanded={open && !disabled}
+                    aria-controls={open ? listId : undefined}
+                    aria-activedescendant={open && filteredOptions[activeIndex] ? `${optionId}-${activeIndex}` : undefined}
+                    {...accessibility}
+                    disabled={disabled}
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    // Cerrado muestra la opción elegida; al escribir muestra la búsqueda.
+                    value={open ? search : selectedOption?.label ?? ""}
+                    placeholder={loading ? "Cargando..." : selectedOption?.label ?? placeholder}
+                    onClick={() => { if (!open) openList() }}
+                    onKeyDown={handleFieldKeyDown}
+                    onChange={event => {
+                        aplicarMayusculas(event)
+                        if (open) setSearch(event.target.value)
+                        else openList(event.target.value)
+                    }}
+                    className={formControlClassName(hasError, `h-12 ${selectedOption ? "pr-20" : "pr-10"}`)}
+                />
+                <ChevronDown size={18} aria-hidden="true" className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-text-tertiary transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
+            </div> : <button
                 id={id}
                 ref={triggerRef}
                 type="button"
@@ -322,7 +373,7 @@ export function Combobox({
                     {selectedOption && !disabled && <span className="w-8" />}
                     <ChevronDown size={18} className={`text-text-tertiary transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
                 </span>
-            </button>
+            </button>}
             {selectedOption && !disabled && <button type="button" onClick={handleClear} aria-label={`Limpiar selección: ${selectedOption.label}`}
                 className="absolute right-9 top-6 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-text-tertiary hover:bg-bg-primary hover:text-dark"><X size={15} aria-hidden="true" /></button>}
 

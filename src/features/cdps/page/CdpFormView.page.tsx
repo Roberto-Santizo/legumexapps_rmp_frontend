@@ -88,8 +88,8 @@ export function CdpFormView() {
                         id="fincaId" value={field.value ? Number(field.value) : null}
                         onChange={value => field.onChange(value == null ? "" : String(value))}
                         options={fincas.map(finca => ({ value: finca.id, label: finca.name }))}
-                        placeholder="Selecciona una finca" emptyMessage="No se encontraron fincas"
-                        hasError={!!fincaIdError} disabled={isPending}
+                        placeholder="Escribe o selecciona una finca" emptyMessage="No se encontraron fincas"
+                        hasError={!!fincaIdError} disabled={isPending} loading={fincasQuery.isLoading} searchInField
                     />} />
                 </FormField>
 
